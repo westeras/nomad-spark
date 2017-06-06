@@ -158,6 +158,7 @@ abstract class AbstractCommandBuilder {
         "launcher",
         "mllib",
         "repl",
+        "resource-managers/nomad",
         "sql/catalyst",
         "sql/core",
         "sql/hive",

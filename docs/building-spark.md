@@ -42,7 +42,7 @@ You can fix these problems by setting the `MAVEN_OPTS` variable as discussed bef
 * If using `build/mvn` with no `MAVEN_OPTS` set, the script will automatically add the above options to the `MAVEN_OPTS` environment variable.
 * The `test` phase of the Spark build will automatically add these options to `MAVEN_OPTS`, even when not using `build/mvn`.
 * You may see warnings like "ignoring option MaxPermSize=1g; support was removed in 8.0" when building or running tests with Java 8 and `build/mvn`. These warnings are harmless.
-    
+
 
 ### build/mvn
 
@@ -80,7 +80,7 @@ Because HDFS is not protocol-compatible across versions, if you want to read fro
   </tbody>
 </table>
 
-Note that support for versions of Hadoop before 2.6 are deprecated as of Spark 2.1.0 and may be 
+Note that support for versions of Hadoop before 2.6 are deprecated as of Spark 2.1.0 and may be
 removed in Spark 2.2.0.
 
 
@@ -128,12 +128,16 @@ like ZooKeeper and Hadoop itself.
 
     ./build/mvn -Pmesos -DskipTests clean package
 
+## Building with Nomad support
+
+    ./build/mvn -Pnomad -DskipTests clean package
+
 ## Building for Scala 2.10
 To produce a Spark package compiled with Scala 2.10, use the `-Dscala-2.10` property:
 
     ./dev/change-scala-version.sh 2.10
     ./build/mvn -Pyarn -Phadoop-2.4 -Dscala-2.10 -DskipTests clean package
-    
+
 Note that support for Scala 2.10 is deprecated as of Spark 2.1.0 and may be removed in Spark 2.2.0.
 
 ## Building submodules individually
