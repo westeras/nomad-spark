@@ -342,7 +342,8 @@ private[spark] class SecurityManager(
    *
    * If authentication is disabled, do nothing.
    *
-   * In YARN and local mode, generate a new secret and store it in the current user's credentials.
+   * In YARN, local, and Nomad modes, generate a new secret and store it in the current user's
+   * credentials.
    *
    * In other modes, assert that the auth secret is set in the configuration.
    */
@@ -355,7 +356,8 @@ private[spark] class SecurityManager(
 
     val master = sparkConf.get(SparkLauncher.SPARK_MASTER, "")
     master match {
-      case "yarn" | "local" | LOCAL_N_REGEX(_) | LOCAL_N_FAILURES_REGEX(_, _) =>
+      case "yarn" | "nomad" | NOMAD_REGEX(_) |
+           "local" | LOCAL_N_REGEX(_) | LOCAL_N_FAILURES_REGEX(_, _) =>
         // Secret generation allowed here
       case _ =>
         require(sparkConf.contains(SPARK_AUTH_SECRET_CONF),

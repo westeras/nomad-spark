@@ -41,9 +41,9 @@ SCALA_VERSION=$("$MVN" help:evaluate -Dexpression=scala.binary.version $@ 2>/dev
     | grep -v "WARNING"\
     | tail -n 1)
 if [ "$SCALA_VERSION" = "2.11" ]; then
-  HADOOP2_MODULE_PROFILES="-Phive-thriftserver -Pmesos -Pkafka-0-8 -Pkubernetes -Pyarn -Pflume -Phive"
+  HADOOP2_MODULE_PROFILES="-Phive-thriftserver -Pmesos -Pnomad -Pkafka-0-8 -Pkubernetes -Pyarn -Pflume -Phive"
 else
-  HADOOP2_MODULE_PROFILES="-Phive-thriftserver -Pmesos -Pkubernetes -Pyarn -Pflume -Phive"
+  HADOOP2_MODULE_PROFILES="-Phive-thriftserver -Pmesos -Pnomad -Pkubernetes -Pyarn -Pflume -Phive"
 fi
 
 # We'll switch the version to a temp. one, publish POMs using that new version, then switch back to
