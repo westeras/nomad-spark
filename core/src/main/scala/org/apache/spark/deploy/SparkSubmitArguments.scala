@@ -49,6 +49,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
   var totalExecutorCores: String = null
   var propertiesFile: String = null
   var driverMemory: String = null
+  var driverCores: String = null
   var driverExtraClassPath: String = null
   var driverExtraLibraryPath: String = null
   var driverExtraJavaOptions: String = null
@@ -79,10 +80,18 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
 
   // Standalone cluster mode only
   var supervise: Boolean = false
-  var driverCores: String = null
   var submissionToKill: String = null
   var submissionToRequestStatusFor: String = null
   var useRest: Boolean = false // used internally
+
+  // Nomad mode only
+  var distribution: String = null
+  var dockerImage: String = null
+  var driverCpu: String = null
+  var executorCpu: String = null
+  var monitorUntil: String = null
+  var isNomadDryRun: Boolean = false
+  var nomadTemplate: String = null
 
   /** Default properties present in the currently defined defaults file. */
   lazy val defaultSparkProperties: HashMap[String, String] = {
@@ -170,6 +179,9 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     driverCores = Option(driverCores)
       .orElse(sparkProperties.get("spark.driver.cores"))
       .orNull
+    driverCpu = Option(driverCpu)
+      .orElse(sparkProperties.get("spark.driver.cpu"))
+      .orNull
     executorMemory = Option(executorMemory)
       .orElse(sparkProperties.get("spark.executor.memory"))
       .orElse(env.get("SPARK_EXECUTOR_MEMORY"))
@@ -177,6 +189,9 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     executorCores = Option(executorCores)
       .orElse(sparkProperties.get("spark.executor.cores"))
       .orElse(env.get("SPARK_EXECUTOR_CORES"))
+      .orNull
+    executorCpu = Option(executorCpu)
+      .orElse(sparkProperties.get("spark.executor.cpu"))
       .orNull
     totalExecutorCores = Option(totalExecutorCores)
       .orElse(sparkProperties.get("spark.cores.max"))
@@ -203,6 +218,11 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     principal = Option(principal).orElse(sparkProperties.get("spark.yarn.principal")).orNull
     dynamicAllocationEnabled =
       sparkProperties.get("spark.dynamicAllocation.enabled").exists("true".equalsIgnoreCase)
+    distribution = Option(distribution).orElse(sparkProperties.get("spark.nomad.sparkDistribution"))
+      .orNull
+    dockerImage = Option(dockerImage).orElse(sparkProperties.get("spark.nomad.dockerImage")).orNull
+    monitorUntil = Option(monitorUntil)
+      .orElse(sparkProperties.get("spark.nomad.cluster.monitorUntil")).orNull
 
     // Try to set main class from JAR if no --class argument is given
     if (mainClass == null && !isPython && !isR && primaryResource != null) {
@@ -326,10 +346,12 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
     |  deployMode              $deployMode
     |  executorMemory          $executorMemory
     |  executorCores           $executorCores
+    |  executorCpu             $executorCpu
     |  totalExecutorCores      $totalExecutorCores
     |  propertiesFile          $propertiesFile
     |  driverMemory            $driverMemory
     |  driverCores             $driverCores
+    |  driverCpu               $driverCpu
     |  driverExtraClassPath    $driverExtraClassPath
     |  driverExtraLibraryPath  $driverExtraLibraryPath
     |  driverExtraJavaOptions  $driverExtraJavaOptions
@@ -382,6 +404,9 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
       case EXECUTOR_CORES =>
         executorCores = value
 
+      case EXECUTOR_CPU =>
+        executorCpu = value
+
       case EXECUTOR_MEMORY =>
         executorMemory = value
 
@@ -390,6 +415,9 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
 
       case DRIVER_CORES =>
         driverCores = value
+
+      case DRIVER_CPU =>
+        driverCpu = value
 
       case DRIVER_CLASS_PATH =>
         driverExtraClassPath = value
@@ -469,6 +497,21 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
       case USAGE_ERROR =>
         printUsageAndExit(1)
 
+      case DISTRIBUTION =>
+        distribution = value
+
+      case DOCKER_IMAGE =>
+        dockerImage = value
+
+      case MONITOR_UNTIL =>
+        monitorUntil = value
+
+      case NOMAD_DRY_RUN =>
+        isNomadDryRun = true
+
+      case NOMAD_TEMPLATE =>
+        nomadTemplate = value
+
       case _ =>
         error(s"Unexpected argument '$opt'.")
     }
@@ -517,6 +560,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
       s"""
         |Options:
         |  --master MASTER_URL         spark://host:port, mesos://host:port, yarn,
+        |                              nomad, nomad:http://host:post, nomad:https://host:post,
         |                              k8s://https://host:port, or local (Default: local[*]).
         |  --deploy-mode DEPLOY_MODE   Whether to launch the driver program locally ("client") or
         |                              on one of the worker machines inside the cluster ("cluster")
@@ -573,7 +617,7 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
         | Spark standalone and Mesos only:
         |  --total-executor-cores NUM  Total cores for all executors.
         |
-        | Spark standalone and YARN only:
+        | Spark standalone, YARN and Nomad only:
         |  --executor-cores NUM        Number of cores per executor. (Default: 1 in YARN mode,
         |                              or all available cores on the worker in standalone mode)
         |
@@ -591,7 +635,22 @@ private[deploy] class SparkSubmitArguments(args: Seq[String], env: Map[String, S
         |                              the node running the Application Master via the Secure
         |                              Distributed Cache, for renewing the login tickets and the
         |                              delegation tokens periodically.
-      """.stripMargin
+        |
+        | Nomad only:
+        |  --distribution URL          Location of the Spark distribution to use in the cluster
+        |  --docker-image IMAGE        The docker image to use in the cluster
+        |  --executor-cpu Mhz          CPU share per executor
+        |  --nomad-dry-run             If given, performs a dry-run construction of the Nomad job
+        |                              and outputs it as JSON, instead of running the application.
+        |  --nomad-template PATH       Path to a Nomad JSON jobspec to use a template for the Nomad
+        |                              job that Spark creates.
+        |
+        | Nomad with cluster deploy mode only:
+        |  --driver-cpu MHz            CPU share for the driver
+        |  --monitor-until CONDITION   Tells spark-submit to monitor the job until the condition
+        |                              (submitted, scheduled, or complete) is reached.
+        |                              (Defaults: "submitted").
+        |""".stripMargin
     )
 
     if (SparkSubmit.isSqlShell(mainClass)) {

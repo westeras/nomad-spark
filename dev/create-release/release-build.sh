@@ -92,6 +92,7 @@ BASE_DIR=$(pwd)
 init_java
 init_maven_sbt
 
+
 rm -rf spark
 git clone "$ASF_REPO"
 cd spark
@@ -114,7 +115,7 @@ PUBLISH_SCALA_2_10=0
 SCALA_2_10_PROFILES="-Pscala-2.10"
 SCALA_2_11_PROFILES=
 if [[ $SPARK_VERSION > "2.3" ]]; then
-  BASE_PROFILES="$BASE_PROFILES -Pkubernetes -Pflume"
+  BASE_PROFILES="$BASE_PROFILES -Pnomad -Pkubernetes -Pflume"
   SCALA_2_11_PROFILES="-Pkafka-0-8"
 else
   PUBLISH_SCALA_2_10=1
