@@ -38,7 +38,7 @@ Users can also download a "Hadoop free" binary and run Spark with any Hadoop ver
 Scala and Java users can include Spark in their projects using its Maven coordinates and Python users can install Spark from PyPI.
 
 
-If you'd like to build Spark from 
+If you'd like to build Spark from
 source, visit [Building Spark](building-spark.html).
 
 
@@ -102,18 +102,19 @@ options for deployment:
 * [Apache Mesos](running-on-mesos.html)
 * [Hadoop YARN](running-on-yarn.html)
 * [Kubernetes](running-on-kubernetes.html)
+* [Nomad](running-on-nomad.html)
 
 # Where to Go from Here
 
 **Programming Guides:**
 
 * [Quick Start](quick-start.html): a quick introduction to the Spark API; start here!
-* [RDD Programming Guide](rdd-programming-guide.html): overview of Spark basics - RDDs (core but old API), accumulators, and broadcast variables  
+* [RDD Programming Guide](rdd-programming-guide.html): overview of Spark basics - RDDs (core but old API), accumulators, and broadcast variables
 * [Spark SQL, Datasets, and DataFrames](sql-programming-guide.html): processing structured data with relational queries (newer API than RDDs)
 * [Structured Streaming](structured-streaming-programming-guide.html): processing structured data streams with relation queries (using Datasets and DataFrames, newer API than DStreams)
 * [Spark Streaming](streaming-programming-guide.html): processing data streams using DStreams (old API)
 * [MLlib](ml-guide.html): applying machine learning algorithms
-* [GraphX](graphx-programming-guide.html): processing graphs 
+* [GraphX](graphx-programming-guide.html): processing graphs
 
 **API Docs:**
 
@@ -134,6 +135,7 @@ options for deployment:
       [Apache Mesos](https://mesos.apache.org)
   * [YARN](running-on-yarn.html): deploy Spark on top of Hadoop NextGen (YARN)
   * [Kubernetes](running-on-kubernetes.html): deploy Spark on top of Kubernetes
+  * [Nomad](running-on-nomad.html): deploy Spark on top of Nomad
 
 **Other Documents:**
 

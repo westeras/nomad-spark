@@ -162,6 +162,7 @@ abstract class AbstractCommandBuilder {
         "mllib",
         "repl",
         "resource-managers/mesos",
+        "resource-managers/nomad",
         "resource-managers/yarn",
         "sql/catalyst",
         "sql/core",

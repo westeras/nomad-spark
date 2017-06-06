@@ -202,6 +202,8 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
         makeOffers(executorId)
     }
 
+    protected def synchronizedOnNewExecutorId(executorId: String): Unit = {}
+
     override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = {
 
       case RegisterExecutor(executorId, executorRef, hostname, cores, logUrls,
@@ -241,9 +243,7 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
           // in this block are read when requesting executors
           CoarseGrainedSchedulerBackend.this.synchronized {
             executorDataMap.put(executorId, data)
-            if (currentExecutorIdCounter < executorId.toInt) {
-              currentExecutorIdCounter = executorId.toInt
-            }
+            synchronizedOnNewExecutorId(executorId)
             if (numPendingExecutors > 0) {
               numPendingExecutors -= 1
               logDebug(s"Decremented number of pending executors ($numPendingExecutors left)")
@@ -748,8 +748,8 @@ class CoarseGrainedSchedulerBackend(scheduler: TaskSchedulerImpl, val rpcEnv: Rp
 
       val killResponse = adjustTotalExecutors.flatMap(killExecutors)(ThreadUtils.sameThread)
 
-      killResponse.flatMap(killSuccessful =>
-        Future.successful (if (killSuccessful) executorsToKill else Seq.empty[String])
+      killResponse.map(killSuccessful =>
+        if (killSuccessful) executorsToKill else Seq.empty[String]
       )(ThreadUtils.sameThread)
     }
 

@@ -307,7 +307,8 @@ private[spark] class SecurityManager(
    *
    * If authentication is disabled, do nothing.
    *
-   * In YARN and local mode, generate a new secret and store it in the current user's credentials.
+   * In YARN, local, and Nomad modes, generate a new secret and store it in the current user's
+   * credentials.
    *
    * In other modes, assert that the auth secret is set in the configuration.
    */
@@ -321,7 +322,8 @@ private[spark] class SecurityManager(
     // TODO: this really should be abstracted somewhere else.
     val master = sparkConf.get(SparkLauncher.SPARK_MASTER, "")
     val storeInUgi = master match {
-      case "yarn" | "local" | LOCAL_N_REGEX(_) | LOCAL_N_FAILURES_REGEX(_, _) =>
+      case "yarn" | "nomad" | NOMAD_REGEX(_) |
+           "local" | LOCAL_N_REGEX(_) | LOCAL_N_FAILURES_REGEX(_, _) =>
         true
 
       case k8sRegex() =>

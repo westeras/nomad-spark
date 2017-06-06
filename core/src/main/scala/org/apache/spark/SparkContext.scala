@@ -2980,6 +2980,8 @@ private object SparkMasterRegex {
   val LOCAL_CLUSTER_REGEX = """local-cluster\[\s*([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*]""".r
   // Regular expression for connecting to Spark deploy clusters
   val SPARK_REGEX = """spark://(.*)""".r
+  // Regular expression for connecting to Nomad clusters
+  val NOMAD_REGEX = """nomad://(.*)""".r
 }
 
 /**

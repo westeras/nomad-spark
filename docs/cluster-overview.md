@@ -28,7 +28,7 @@ Spark applications run as independent sets of processes on a cluster, coordinate
 object in your main program (called the _driver program_).
 
 Specifically, to run on a cluster, the SparkContext can connect to several types of _cluster managers_
-(either Spark's own standalone cluster manager, Mesos or YARN), which allocate resources across
+(Spark's own standalone cluster manager, Mesos, YARN or Nomad), which allocate resources across
 applications. Once connected, Spark acquires *executors* on nodes in the cluster, which are
 processes that run computations and store data for your application.
 Next, it sends your application code (defined by JAR or Python files passed to SparkContext) to
@@ -60,7 +60,7 @@ There are several useful things to note about this architecture:
 
 # Cluster Manager Types
 
-The system currently supports several cluster managers:
+The system currently supports four cluster managers:
 
 * [Standalone](spark-standalone.html) -- a simple cluster manager included with Spark that makes it
   easy to set up a cluster.
@@ -69,9 +69,7 @@ The system currently supports several cluster managers:
 * [Hadoop YARN](running-on-yarn.html) -- the resource manager in Hadoop 2.
 * [Kubernetes](running-on-kubernetes.html) -- an open-source system for automating deployment, scaling,
   and management of containerized applications.
-
-A third-party project (not supported by the Spark project) exists to add support for
-[Nomad](https://github.com/hashicorp/nomad-spark) as a cluster manager.
+* [Nomad](running-on-nomad.html) -- a general cluster manager that integrates with Consul.
 
 # Submitting Applications
 

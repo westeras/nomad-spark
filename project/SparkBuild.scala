@@ -56,10 +56,10 @@ object BuildCommons {
     "tags", "sketch", "kvstore"
   ).map(ProjectRef(buildLocation, _)) ++ sqlProjects ++ streamingProjects
 
-  val optionallyEnabledProjects@Seq(kubernetes, mesos, yarn,
+  val optionallyEnabledProjects@Seq(kubernetes, mesos, yarn, nomad, nomadTestApps,
     sparkGangliaLgpl, streamingKinesisAsl,
     dockerIntegrationTests, hadoopCloud, kubernetesIntegrationTests) =
-    Seq("kubernetes", "mesos", "yarn",
+    Seq("kubernetes", "mesos", "yarn", "nomad", "nomad-test-apps",
       "ganglia-lgpl", "streaming-kinesis-asl",
       "docker-integration-tests", "hadoop-cloud", "kubernetes-integration-tests").map(ProjectRef(buildLocation, _))
 

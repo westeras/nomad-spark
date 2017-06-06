@@ -92,6 +92,7 @@ BASE_DIR=$(pwd)
 init_java
 init_maven_sbt
 
+
 rm -rf spark
 git clone "$ASF_REPO"
 cd spark
@@ -111,7 +112,7 @@ fi
 # different versions of Scala are supported.
 BASE_PROFILES="-Pmesos -Pyarn"
 if [[ $SPARK_VERSION > "2.3" ]]; then
-  BASE_PROFILES="$BASE_PROFILES -Pkubernetes"
+  BASE_PROFILES="$BASE_PROFILES -Pnomad -Pkubernetes"
 fi
 
 # TODO: revisit for Scala 2.13
