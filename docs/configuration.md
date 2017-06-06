@@ -59,7 +59,7 @@ The following format is accepted:
     1p or 1pb (pebibytes = 1024 tebibytes)
 
 While numbers without units are generally interpreted as bytes, a few are interpreted as KiB or MiB.
-See documentation of individual configuration properties. Specifying units is desirable where 
+See documentation of individual configuration properties. Specifying units is desirable where
 possible.
 
 ## Dynamically Loading Spark Properties
@@ -140,8 +140,8 @@ of the most common options to set are:
   <td><code>spark.driver.maxResultSize</code></td>
   <td>1g</td>
   <td>
-    Limit of total size of serialized results of all partitions for each Spark action (e.g. 
-    collect) in bytes. Should be at least 1M, or 0 for unlimited. Jobs will be aborted if the total 
+    Limit of total size of serialized results of all partitions for each Spark action (e.g.
+    collect) in bytes. Should be at least 1M, or 0 for unlimited. Jobs will be aborted if the total
     size is above this limit.
     Having a high limit may cause out-of-memory errors in driver (depends on spark.driver.memory
     and memory overhead of objects in JVM). Setting a proper limit can protect the driver from
@@ -152,7 +152,7 @@ of the most common options to set are:
   <td><code>spark.driver.memory</code></td>
   <td>1g</td>
   <td>
-    Amount of memory to use for the driver process, i.e. where SparkContext is initialized, in MiB 
+    Amount of memory to use for the driver process, i.e. where SparkContext is initialized, in MiB
     unless otherwise specified (e.g. <code>1g</code>, <code>2g</code>).
     <br />
     <em>Note:</em> In client mode, this config must not be set through the <code>SparkConf</code>
@@ -166,8 +166,8 @@ of the most common options to set are:
   <td>driverMemory * 0.10, with minimum of 384 </td>
   <td>
     The amount of off-heap memory to be allocated per driver in cluster mode, in MiB unless
-    otherwise specified. This is memory that accounts for things like VM overheads, interned strings, 
-    other native overheads, etc. This tends to grow with the container size (typically 6-10%). 
+    otherwise specified. This is memory that accounts for things like VM overheads, interned strings,
+    other native overheads, etc. This tends to grow with the container size (typically 6-10%).
     This option is currently supported on YARN and Kubernetes.
   </td>
 </tr>
@@ -184,7 +184,7 @@ of the most common options to set are:
   <td>executorMemory * 0.10, with minimum of 384 </td>
   <td>
     The amount of off-heap memory to be allocated per executor, in MiB unless otherwise specified.
-    This is memory that accounts for things like VM overheads, interned strings, other native 
+    This is memory that accounts for things like VM overheads, interned strings, other native
     overheads, etc. This tends to grow with the executor size (typically 6-10%).
     This option is currently supported on YARN and Kubernetes.
   </td>
@@ -546,8 +546,8 @@ Apart from these, the following properties are also available, and may be useful
   <td><code>spark.reducer.maxSizeInFlight</code></td>
   <td>48m</td>
   <td>
-    Maximum size of map outputs to fetch simultaneously from each reduce task, in MiB unless 
-    otherwise specified. Since each output requires us to create a buffer to receive it, this 
+    Maximum size of map outputs to fetch simultaneously from each reduce task, in MiB unless
+    otherwise specified. Since each output requires us to create a buffer to receive it, this
     represents a fixed memory overhead per reduce task, so keep it small unless you have a
     large amount of memory.
   </td>
@@ -596,8 +596,8 @@ Apart from these, the following properties are also available, and may be useful
   <td><code>spark.shuffle.file.buffer</code></td>
   <td>32k</td>
   <td>
-    Size of the in-memory buffer for each shuffle file output stream, in KiB unless otherwise 
-    specified. These buffers reduce the number of disk seeks and system calls made in creating 
+    Size of the in-memory buffer for each shuffle file output stream, in KiB unless otherwise
+    specified. These buffers reduce the number of disk seeks and system calls made in creating
     intermediate shuffle files.
   </td>
 </tr>
@@ -693,8 +693,8 @@ Apart from these, the following properties are also available, and may be useful
   <td><code>spark.shuffle.accurateBlockThreshold</code></td>
   <td>100 * 1024 * 1024</td>
   <td>
-    Threshold in bytes above which the size of shuffle blocks in HighlyCompressedMapStatus is 
-    accurately recorded. This helps to prevent OOM by avoiding underestimating shuffle 
+    Threshold in bytes above which the size of shuffle blocks in HighlyCompressedMapStatus is
+    accurately recorded. This helps to prevent OOM by avoiding underestimating shuffle
     block size when fetch shuffle blocks.
   </td>
 </tr>
@@ -1018,7 +1018,7 @@ Apart from these, the following properties are also available, and may be useful
   <td><code>spark.kryoserializer.buffer</code></td>
   <td>64k</td>
   <td>
-    Initial size of Kryo's serialization buffer, in KiB unless otherwise specified. 
+    Initial size of Kryo's serialization buffer, in KiB unless otherwise specified.
     Note that there will be one buffer <i>per core</i> on each worker. This buffer will grow up to
     <code>spark.kryoserializer.buffer.max</code> if needed.
   </td>
@@ -1094,7 +1094,7 @@ Apart from these, the following properties are also available, and may be useful
   <td><code>spark.memory.offHeap.enabled</code></td>
   <td>false</td>
   <td>
-    If true, Spark will attempt to use off-heap memory for certain operations. If off-heap memory 
+    If true, Spark will attempt to use off-heap memory for certain operations. If off-heap memory
     use is enabled, then <code>spark.memory.offHeap.size</code> must be positive.
   </td>
 </tr>
@@ -1103,7 +1103,7 @@ Apart from these, the following properties are also available, and may be useful
   <td>0</td>
   <td>
     The absolute amount of memory in bytes which can be used for off-heap allocation.
-    This setting has no impact on heap memory usage, so if your executors' total memory consumption 
+    This setting has no impact on heap memory usage, so if your executors' total memory consumption
     must fit within some hard limit then be sure to shrink your JVM heap size accordingly.
     This must be set to a positive value when <code>spark.memory.offHeap.enabled=true</code>.
   </td>
@@ -1212,15 +1212,15 @@ Apart from these, the following properties are also available, and may be useful
   <td><code>spark.broadcast.blockSize</code></td>
   <td>4m</td>
   <td>
-    Size of each piece of a block for <code>TorrentBroadcastFactory</code>, in KiB unless otherwise 
-    specified. Too large a value decreases parallelism during broadcast (makes it slower); however, 
+    Size of each piece of a block for <code>TorrentBroadcastFactory</code>, in KiB unless otherwise
+    specified. Too large a value decreases parallelism during broadcast (makes it slower); however,
     if it is too small, <code>BlockManager</code> might take a performance hit.
   </td>
 </tr>
 <tr>
   <td><code>spark.executor.cores</code></td>
   <td>
-    1 in YARN mode, all the available cores on the worker in
+    1 in YARN and Nomad modes, all the available cores on the worker in
     standalone and Mesos coarse-grained modes.
   </td>
   <td>
@@ -1508,10 +1508,10 @@ Apart from these, the following properties are also available, and may be useful
 </tr>
 <tr>
   <td><code>spark.scheduler.minRegisteredResourcesRatio</code></td>
-  <td>0.8 for KUBERNETES mode; 0.8 for YARN mode; 0.0 for standalone mode and Mesos coarse-grained mode</td>
+  <td>0.8 for KUBERNETES, YARN and Nomad modes; 0.0 for standalone mode and Mesos coarse-grained mode</td>
   <td>
     The minimum ratio of registered resources (registered resources / total expected resources)
-    (resources are executors in yarn mode and Kubernetes mode, CPU cores in standalone mode and Mesos coarsed-grained
+    (resources are executors in yarn, Kubernetes and Nomad modes, CPU cores in standalone mode and Mesos coarsed-grained
      mode ['spark.cores.max' value is total expected resources for Mesos coarse-grained mode] )
     to wait for before scheduling begins. Specified as a double between 0.0 and 1.0.
     Regardless of whether the minimum ratio of resources has been reached,
@@ -1869,7 +1869,7 @@ Apart from these, the following properties are also available, and may be useful
   <td>false</td>
   <td>
     Whether Spark authenticates its internal connections. See
-    <code>spark.authenticate.secret</code> if not running on YARN.
+    <code>spark.authenticate.secret</code> if not running on YARN or Nomad.
   </td>
 </tr>
 <tr>
@@ -1877,7 +1877,7 @@ Apart from these, the following properties are also available, and may be useful
   <td>None</td>
   <td>
     Set the secret key used for Spark to authenticate between components. This needs to be set if
-    not running on YARN and authentication is enabled.
+    not running on YARN or Nomad and authentication is enabled.
   </td>
 </tr>
 <tr>
@@ -2388,6 +2388,8 @@ can be found on the pages for each mode:
 
 #### [Kubernetes](running-on-kubernetes.html#configuration)
 
+#### [Nomad](running-on-nomad.html#configuration)
+
 #### [Standalone Mode](spark-standalone.html#cluster-launch-scripts)
 
 # Environment Variables
@@ -2480,7 +2482,7 @@ You can copy and modify `hdfs-site.xml`, `core-site.xml`, `yarn-site.xml`, `hive
 Spark's classpath for each application. In a Spark cluster running on YARN, these configuration
 files are set cluster-wide, and cannot safely be changed by the application.
 
-The better choice is to use spark hadoop properties in the form of `spark.hadoop.*`. 
+The better choice is to use spark hadoop properties in the form of `spark.hadoop.*`.
 They can be considered as same as normal spark properties which can be set in `$SPARK_HOME/conf/spark-defalut.conf`
 
 In some cases, you may want to avoid hard-coding certain configurations in a `SparkConf`. For
@@ -2493,11 +2495,11 @@ val sc = new SparkContext(conf)
 
 Also, you can modify or add configurations at runtime:
 {% highlight bash %}
-./bin/spark-submit \ 
-  --name "My app" \ 
-  --master local[4] \  
-  --conf spark.eventLog.enabled=false \ 
-  --conf "spark.executor.extraJavaOptions=-XX:+PrintGCDetails -XX:+PrintGCTimeStamps" \ 
-  --conf spark.hadoop.abc.def=xyz \ 
+./bin/spark-submit \
+  --name "My app" \
+  --master local[4] \
+  --conf spark.eventLog.enabled=false \
+  --conf "spark.executor.extraJavaOptions=-XX:+PrintGCDetails -XX:+PrintGCTimeStamps" \
+  --conf spark.hadoop.abc.def=xyz \
   myApp.jar
 {% endhighlight %}

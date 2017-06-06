@@ -534,7 +534,8 @@ private[spark] class SecurityManager(
       return
     }
 
-    if (sparkConf.get(SparkLauncher.SPARK_MASTER, null) != "yarn") {
+    val sparkMaster = sparkConf.get(SparkLauncher.SPARK_MASTER, null)
+    if (sparkMaster != "yarn" && !sparkMaster.startsWith("nomad")) {
       require(sparkConf.contains(SPARK_AUTH_SECRET_CONF),
         s"A secret key must be specified via the $SPARK_AUTH_SECRET_CONF config.")
       return
