@@ -58,7 +58,7 @@ object BuildCommons {
 
   val optionallyEnabledProjects@Seq(mesos, yarn, sparkGangliaLgpl,
     streamingKinesisAsl, dockerIntegrationTests) =
-    Seq("mesos", "yarn", "ganglia-lgpl", "streaming-kinesis-asl",
+    Seq("mesos", "nomad", "yarn", "ganglia-lgpl", "streaming-kinesis-asl",
       "docker-integration-tests").map(ProjectRef(buildLocation, _))
 
   val assemblyProjects@Seq(networkYarn, streamingFlumeAssembly, streamingKafkaAssembly, streamingKafka010Assembly, streamingKinesisAslAssembly) =

@@ -445,6 +445,10 @@ private[spark] class SecurityManager(
       Option(sparkConf.getenv(SecurityManager.ENV_AUTH_SECRET))
         .orElse(sparkConf.getOption(SecurityManager.SPARK_AUTH_SECRET_CONF)) match {
         case Some(value) => value
+        case None if sparkConf.getOption("spark.master").exists(_.startsWith("nomad")) =>
+          val secret = Utils.createSecret(sparkConf)
+          sparkConf.set(SecurityManager.SPARK_AUTH_SECRET_CONF, secret)
+          secret
         case None =>
           throw new IllegalArgumentException(
             "Error: a secret key must be specified via the " +
