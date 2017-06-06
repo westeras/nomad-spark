@@ -47,7 +47,7 @@ You can fix these problems by setting the `MAVEN_OPTS` variable as discussed bef
 **Note:**
 
 * If using `build/mvn` with no `MAVEN_OPTS` set, the script will automatically add the above options to the `MAVEN_OPTS` environment variable.
-* The `test` phase of the Spark build will automatically add these options to `MAVEN_OPTS`, even when not using `build/mvn`.    
+* The `test` phase of the Spark build will automatically add these options to `MAVEN_OPTS`, even when not using `build/mvn`.
 
 ### build/mvn
 
@@ -72,7 +72,7 @@ This will build Spark distribution along with Python pip and R packages. For mor
 
 You can specify the exact version of Hadoop to compile against through the `hadoop.version` property. 
 
-You can enable the `yarn` profile and optionally set the `yarn.version` property if it is different 
+You can enable the `yarn` profile and optionally set the `yarn.version` property if it is different
 from `hadoop.version`.
 
 Example:
@@ -107,6 +107,10 @@ like ZooKeeper and Hadoop itself.
 ## Building with Kubernetes support
 
     ./build/mvn -Pkubernetes -DskipTests clean package
+
+## Building with Nomad support
+
+    ./build/mvn -Pnomad -DskipTests clean package
 
 ## Building submodules individually
 

@@ -307,7 +307,8 @@ private[spark] class SecurityManager(
    *
    * If authentication is disabled, do nothing.
    *
-   * In YARN and local mode, generate a new secret and store it in the current user's credentials.
+   * In YARN, local, and Nomad modes, generate a new secret and store it in the current user's
+   * credentials.
    *
    * In other modes, assert that the auth secret is set in the configuration.
    */
@@ -328,6 +329,9 @@ private[spark] class SecurityManager(
         // Don't propagate the secret through the user's credentials in kubernetes. That conflicts
         // with the way k8s handles propagation of delegation tokens.
         false
+
+      case | "nomad" | NOMAD_REGEX(_) | =>
+        true 
 
       case _ =>
         require(sparkConf.contains(SPARK_AUTH_SECRET_CONF),

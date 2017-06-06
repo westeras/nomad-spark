@@ -20,6 +20,7 @@ package org.apache.spark.deploy
 import java.io._
 import java.lang.reflect.{InvocationTargetException, UndeclaredThrowableException}
 import java.net.{URI, URL}
+import java.nio.file.Files
 import java.security.PrivilegedExceptionAction
 import java.text.ParseException
 import java.util.{ServiceLoader, UUID}
@@ -233,9 +234,10 @@ private[spark] class SparkSubmit extends Logging {
       case m if m.startsWith("spark") => STANDALONE
       case m if m.startsWith("mesos") => MESOS
       case m if m.startsWith("k8s") => KUBERNETES
+      case m if m.startsWith("nomad") => NOMAD
       case m if m.startsWith("local") => LOCAL
       case _ =>
-        error("Master must either be yarn or start with spark, mesos, k8s, or local")
+        error("Master must either be yarn or start with spark, mesos, nomad, k8s, or local")
         -1
     }
 
@@ -299,6 +301,7 @@ private[spark] class SparkSubmit extends Logging {
     val isKubernetesClient = clusterManager == KUBERNETES && deployMode == CLIENT
     val isKubernetesClusterModeDriver = isKubernetesClient &&
       sparkConf.getBoolean("spark.kubernetes.submitInDriver", false)
+    val isNomadCluster = clusterManager == NOMAD && deployMode == CLUSTER
 
     if (!isMesosCluster && !isStandAloneCluster) {
       // Resolve maven dependencies if there are any and add classpath to jars. Add them to py-files
@@ -526,6 +529,11 @@ private[spark] class SparkSubmit extends Logging {
       error("Distributing R packages with mesos cluster is not supported.")
     }
 
+    // TODO: Support distributing R packages with Nomad cluster
+    if (args.isR && clusterManager == NOMAD && !RUtils.rPackages.isEmpty) {
+      printErrorAndExit("Distributing R packages with Nomad cluster is not supported.")
+    }
+
     // If we're running an R app, set the main class to our specific R runner
     if (args.isR && deployMode == CLIENT) {
       if (args.primaryResource == SPARKR_SHELL) {
@@ -593,23 +601,37 @@ private[spark] class SparkSubmit extends Logging {
       OptionAssigner(args.archives, YARN, ALL_DEPLOY_MODES, confKey = "spark.yarn.dist.archives",
         mergeFn = Some(mergeFileLists(_, _))),
 
+      // Nomad only
+      OptionAssigner(args.distribution, NOMAD, ALL_DEPLOY_MODES,
+        confKey = "spark.nomad.sparkDistribution"),
+      OptionAssigner(args.dockerImage, NOMAD, ALL_DEPLOY_MODES,
+        confKey = "spark.nomad.dockerImage"),
+      OptionAssigner(args.executorCpu, NOMAD, ALL_DEPLOY_MODES,
+        confKey = "spark.executor.cpu"),
+      OptionAssigner(args.driverCpu, NOMAD, CLUSTER,
+        confKey = "spark.driver.cpu"),
+      OptionAssigner(args.monitorUntil, NOMAD, CLUSTER,
+        confKey = "spark.nomad.cluster.monitorUntil"),
+      OptionAssigner(args.nomadTemplate, NOMAD, ALL_DEPLOY_MODES,
+        confKey = "spark.nomad.job.template"),
+
       // Other options
-      OptionAssigner(args.numExecutors, YARN | KUBERNETES, ALL_DEPLOY_MODES,
+      OptionAssigner(args.numExecutors, YARN | KUBERNETES | NOMAD, ALL_DEPLOY_MODES,
         confKey = EXECUTOR_INSTANCES.key),
-      OptionAssigner(args.executorCores, STANDALONE | YARN | KUBERNETES, ALL_DEPLOY_MODES,
+      OptionAssigner(args.executorCores, STANDALONE | YARN | KUBERNETES | NOMAD, ALL_DEPLOY_MODES,
         confKey = EXECUTOR_CORES.key),
-      OptionAssigner(args.executorMemory, STANDALONE | MESOS | YARN | KUBERNETES, ALL_DEPLOY_MODES,
+      OptionAssigner(args.executorMemory, STANDALONE | MESOS | YARN | KUBERNETES | NOMAD, ALL_DEPLOY_MODES,
         confKey = EXECUTOR_MEMORY.key),
       OptionAssigner(args.totalExecutorCores, STANDALONE | MESOS | KUBERNETES, ALL_DEPLOY_MODES,
         confKey = CORES_MAX.key),
-      OptionAssigner(args.files, LOCAL | STANDALONE | MESOS | KUBERNETES, ALL_DEPLOY_MODES,
+      OptionAssigner(args.files, LOCAL | STANDALONE | MESOS | KUBERNETES | NOMAD, ALL_DEPLOY_MODES,
         confKey = FILES.key),
       OptionAssigner(args.jars, LOCAL, CLIENT, confKey = JARS.key),
-      OptionAssigner(args.jars, STANDALONE | MESOS | KUBERNETES, ALL_DEPLOY_MODES,
+      OptionAssigner(args.jars, STANDALONE | MESOS | KUBERNETES | NOMAD, ALL_DEPLOY_MODES,
         confKey = JARS.key),
-      OptionAssigner(args.driverMemory, STANDALONE | MESOS | YARN | KUBERNETES, CLUSTER,
+      OptionAssigner(args.driverMemory, STANDALONE | MESOS | YARN | KUBERNETES | NOMAD, CLUSTER,
         confKey = DRIVER_MEMORY.key),
-      OptionAssigner(args.driverCores, STANDALONE | MESOS | YARN | KUBERNETES, CLUSTER,
+      OptionAssigner(args.driverCores, STANDALONE | MESOS | YARN | KUBERNETES | NOMAD, CLUSTER,
         confKey = DRIVER_CORES.key),
       OptionAssigner(args.supervise.toString, STANDALONE | MESOS, CLUSTER,
         confKey = DRIVER_SUPERVISE.key),
@@ -775,6 +797,33 @@ private[spark] class SparkSubmit extends Logging {
       }
     }
 
+    if (isNomadCluster || (clusterManager == NOMAD && args.isNomadDryRun)) {
+      childMainClass =
+        if (args.isNomadDryRun) "org.apache.spark.deploy.nomad.NomadDryRun"
+        else "org.apache.spark.deploy.nomad.NomadClusterModeLauncher"
+      if (args.driverExtraClassPath != null) {
+        childClasspath ++= args.driverExtraClassPath.split(":")
+      }
+      if (args.isPython) {
+        childArgs += ("--primary-py-file", args.primaryResource)
+        childArgs += ("--class", "org.apache.spark.deploy.PythonRunner")
+        if (args.pyFiles != null) {
+          sparkConf.set("spark.submit.pyFiles", args.pyFiles)
+        }
+      } else if (args.isR) {
+        childArgs += ("--primary-r-file", args.primaryResource)
+        childArgs += ("--class", "org.apache.spark.deploy.RRunner")
+      } else {
+        if (args.primaryResource != SparkLauncher.NO_RESOURCE) {
+          childArgs += ("--jar", args.primaryResource)
+        }
+        childArgs += ("--class", args.mainClass)
+      }
+      if (args.childArgs != null) {
+        args.childArgs.foreach { arg => childArgs += ("--arg", arg) }
+      }
+    }
+
     // Load any properties specified through --conf and the default properties file
     for ((k, v) <- args.sparkProperties) {
       sparkConf.setIfMissing(k, v)
@@ -807,7 +856,7 @@ private[spark] class SparkSubmit extends Logging {
     val formattedPyFiles = if (deployMode != CLUSTER) {
       PythonRunner.formatPaths(resolvedPyFiles).mkString(",")
     } else {
-      // Ignoring formatting python path in yarn and mesos cluster mode, these two modes
+      // Ignoring formatting python path in yarn, mesos and nomad cluster mode, these two modes
       // support dealing with remote python files, they could distribute and add python files
       // locally.
       resolvedPyFiles
@@ -958,7 +1007,8 @@ object SparkSubmit extends CommandLineUtils with Logging {
   private val MESOS = 4
   private val LOCAL = 8
   private val KUBERNETES = 16
-  private val ALL_CLUSTER_MGRS = YARN | STANDALONE | MESOS | LOCAL | KUBERNETES
+  private val NOMAD = 32
+  private val ALL_CLUSTER_MGRS = YARN | STANDALONE | MESOS | LOCAL | KUBERNETES | NOMAD
 
   // Deploy modes
   private val CLIENT = 1

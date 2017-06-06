@@ -111,7 +111,7 @@ fi
 # different versions of Scala are supported.
 BASE_PROFILES="-Pmesos -Pyarn"
 if [[ $SPARK_VERSION > "2.3" ]]; then
-  BASE_PROFILES="$BASE_PROFILES -Pkubernetes"
+  BASE_PROFILES="$BASE_PROFILES -Pkubernetes -Pnomad"
 fi
 
 # TODO: revisit for Scala 2.13

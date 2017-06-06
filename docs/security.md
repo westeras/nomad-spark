@@ -37,6 +37,8 @@ not documented, Spark does not support.
 # Spark RPC (Communication protocol between Spark processes)
 
 ## Authentication
+* For Spark on [YARN](running-on-yarn.html) or [Nomad](running-on-nomad.html) deployments, configuring `spark.authenticate` to `true` will automatically handle generating and distributing the shared secret. Each application will use a unique shared secret.
+* For other types of Spark deployments, the Spark parameter `spark.authenticate.secret` should be configured on each of the nodes. This secret will be used by all the Master/Workers and applications.
 
 Spark currently supports authentication for RPC channels using a shared secret. Authentication can
 be turned on by setting the `spark.authenticate` configuration parameter.
