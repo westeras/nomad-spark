@@ -51,10 +51,18 @@ to give the integration a test drive on AWS. Builds are currently
 available for Spark [2.1.0](https://s3.amazonaws.com/nomad-spark/spark-2.1.0-bin-nomad.tgz)
 and [2.1.1](https://s3.amazonaws.com/nomad-spark/spark-2.1.1-bin-nomad.tgz).
 
+### Creating Your Own Build
+
+You can create a Nomad-enabled Spark distribution using Spark's standard `make-distribution.sh` script,
+and enabling the `nomad` profile. E.g.:
+
+~~~
+./dev/make-distribution.sh --name nomad --tgz -Pnomad -Psparkr -Phive -Phadoop-2.7 -Phive-thriftserver -Pyarn -DskipTests
+~~~
+
 ---
 
-What follows is the original Spark README.
-
+*The standard Spark README follows below.*
 
 # Apache Spark
 
@@ -87,8 +95,12 @@ You can build Spark using more than one thread by using the -T option with Maven
 More detailed documentation is available from the project site, at
 ["Building Spark"](http://spark.apache.org/docs/latest/building-spark.html).
 
+<<<<<<< HEAD
 For general development tips, including info on developing Spark using an IDE, see
 [http://spark.apache.org/developer-tools.html](the Useful Developer Tools page).
+=======
+For general development tips, including info on developing Spark using an IDE, see ["Useful Developer Tools"](http://spark.apache.org/developer-tools.html).
+>>>>>>> Add build information and restore original README
 
 ## Interactive Scala Shell
 
