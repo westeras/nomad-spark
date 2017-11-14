@@ -84,7 +84,7 @@
     <dependency>
       <groupId>com.hashicorp.nomad</groupId>
       <artifactId>nomad-testkit</artifactId>
-      <version>0.0.3</version>
+      <version>0.7.0</version>
       <scope>test</scope>
     </dependency>
 
