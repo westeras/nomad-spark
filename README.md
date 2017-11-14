@@ -58,7 +58,7 @@ You can create a Nomad-enabled Spark distribution using Spark's standard `make-d
 and enabling the `nomad` profile. E.g.:
 
 ~~~
-./dev/make-distribution.sh --name nomad --tgz -Pnomad -Psparkr -Phive -Phadoop-2.7 -Phive-thriftserver -Pyarn -DskipTests
+./dev/make-distribution.sh --name nomad --tgz -Pnomad -Psparkr -Phive -Phadoop-2.7 -Phive-thriftserver -DskipTests
 ~~~
 
 ---

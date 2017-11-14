@@ -45,23 +45,36 @@ private[spark] case class NomadClusterManagerConf(
 
 private[spark] object NomadClusterManagerConf {
 
+  val AUTH_TOKEN =
+    ConfigBuilder("spark.nomad.authToken")
+      .doc("The secret ket of the Nomad auth token to use when accessing the API " +
+        "(falls back to the NOMAD_TOKEN environment variable). " +
+        "Note that if this configuration setting is set and the cluster deploy mode is used, " +
+        "this setting will be propagated to the driver application in the Nomad job spec. " +
+        "If it is not set and an auth token is taken from the NOMAD_TOKEN environment variable, " +
+        "that token will not be propagated to the driver, which will have to pick up its token " +
+        "from an environment variable.")
+      .stringConf
+      .createOptional
+
   val TLS_CA_CERT =
     ConfigBuilder("spark.nomad.tls.caCert")
       .doc("Path to a .pem file containing the certificate authority to validate the Nomad " +
-        "server's TLS certificate against")
+        "server's TLS certificate against (falls back to the NOMAD_CA_CERT environment variable)")
       .stringConf
       .createOptional
 
   val TLS_CERT =
     ConfigBuilder("spark.nomad.tls.cert")
-      .doc("Path to a .pem file containing the TLS certificate to present to the Nomad server")
+      .doc("Path to a .pem file containing the TLS certificate to present to the Nomad server " +
+        "(falls back to the NOMAD_CLIENT_CERT environment variable)")
       .stringConf
       .createOptional
 
   val TLS_KEY =
     ConfigBuilder("spark.nomad.tls.trustStorePassword")
       .doc("Path to a .pem file containing the private key corresponding to the certificate in " +
-        TLS_CERT.key)
+        TLS_CERT.key + " (falls back to the NOMAD_CLIENT_KEY environment variable)")
       .stringConf
       .createOptional
 
@@ -70,16 +83,19 @@ private[spark] object NomadClusterManagerConf {
   sealed trait JobDescriptor {
     def id: String
     def region: Option[String]
+    def namespace: Option[String]
   }
 
   case class ExistingJob(
       override val id: String,
-      override val region: Option[String]
+      override val region: Option[String],
+      override val namespace: Option[String]
   ) extends JobDescriptor
 
   case class NewJob(job: Job) extends JobDescriptor {
     override def id: String = job.getId
     override def region: Option[String] = Option(job.getRegion)
+    override def namespace: Option[String] = Option(job.getNamespace)
   }
 
   case class KeyPair(certFile: String, keyFile: String)
@@ -111,7 +127,9 @@ private[spark] object NomadClusterManagerConf {
 
   def extractApiConf(
       nomadUrl: Option[HttpHost],
+      authToken: Option[String],
       region: Option[String],
+      namespace: Option[String],
       conf: SparkConf
   ): NomadApiConfiguration = {
     val builder = new NomadApiConfiguration.Builder()
@@ -120,11 +138,14 @@ private[spark] object NomadClusterManagerConf {
 
     nomadUrl.foreach(address => builder.setAddress(address))
 
+    authToken.foreach(builder.setAuthToken)
+
     conf.get(TLS_CA_CERT).foreach(builder.setTlsCaFile)
     KeyPair.apply(conf, TLS_CERT, TLS_KEY)
       .foreach(p => builder.setTlsCertAndKeyFiles(p.certFile, p.keyFile))
 
     region.foreach(builder.setRegion)
+    namespace.foreach(builder.setNamespace)
 
     builder.build()
   }
@@ -136,17 +157,29 @@ private[spark] object NomadClusterManagerConf {
 
     val nomadUrl = extractNomadUrl(conf)
 
+    val authToken = conf.get(AUTH_TOKEN)
+
     val jobDescriptor =
       if (conf.getBoolean(SparkNomadJob.SPARK_NOMAD_CLUSTER_MODE, defaultValue = false)) {
         val jobConf = SparkNomadJob.CommonConf(conf)
-        ExistingJob(jobConf.appId, conf.get(SparkNomadJob.REGION))
+        ExistingJob(
+          id = jobConf.appId,
+          region = conf.get(SparkNomadJob.REGION),
+          namespace = conf.get(SparkNomadJob.NAMESPACE)
+        )
       } else {
         NewJob(SparkNomadJob(conf, nomadUrl, command))
     }
 
     NomadClusterManagerConf(
       jobDescriptor = jobDescriptor,
-      nomadApi = extractApiConf(nomadUrl, jobDescriptor.region, conf),
+      nomadApi = extractApiConf(
+        nomadUrl = nomadUrl,
+        authToken = authToken,
+        region = jobDescriptor.region,
+        namespace = jobDescriptor.namespace,
+        conf = conf
+      ),
       staticExecutorInstances = conf.get(EXECUTOR_INSTANCES)
     )
   }
