@@ -475,6 +475,13 @@ These are configuration properties that are specific to running Spark on Nomad.
   </td>
 </tr>
 <tr>
+  <td><code>spark.nomad.authToken</code></td>
+  <td></td>
+  <td>
+    The secret ket of the Nomad auth token to use when accessing the API (falls back to the NOMAD_TOKEN environment variable). Note that if this configuration setting is set and the cluster deploy mode is used, this setting will be propagated to the driver application in the Nomad job spec. If it is not set and an auth token is taken from the NOMAD_TOKEN environment variable, that token will not be propagated to the driver, which will have to pick up its token from an environment variable.
+  </td>
+</tr>
+<tr>
   <td><code>spark.nomad.cluster.expectImmediateScheduling</code></td>
   <td><code>false</code></td>
   <td>
@@ -643,6 +650,13 @@ These are configuration properties that are specific to running Spark on Nomad.
   </td>
 </tr>
 <tr>
+  <td><code>spark.nomad.namespace</code></td>
+  <td></td>
+  <td>
+    The Nomad namespace to use (falls back to the NOMAD_NAMESPACE environment variable, then to Nomad's default namespace)
+  </td>
+</tr>
+<tr>
   <td><code>spark.nomad.priority</code></td>
   <td></td>
   <td>
@@ -653,7 +667,7 @@ These are configuration properties that are specific to running Spark on Nomad.
   <td><code>spark.nomad.region</code></td>
   <td></td>
   <td>
-    The Nomad region to use (defaults to the region of the first Nomad server contacted)
+    The Nomad region to use (falls back to the NOMAD_REGION environment variable, then to the region of the first Nomad server contacted)
   </td>
 </tr>
 <tr>
@@ -702,21 +716,21 @@ These are configuration properties that are specific to running Spark on Nomad.
   <td><code>spark.nomad.tls.caCert</code></td>
   <td></td>
   <td>
-    Path to a .pem file containing the certificate authority to validate the Nomad server's TLS certificate against
+    Path to a .pem file containing the certificate authority to validate the Nomad server's TLS certificate against (falls back to the NOMAD_CA_CERT environment variable)
   </td>
 </tr>
 <tr>
   <td><code>spark.nomad.tls.cert</code></td>
   <td></td>
   <td>
-    Path to a .pem file containing the TLS certificate to present to the Nomad server
+    Path to a .pem file containing the TLS certificate to present to the Nomad server (falls back to the NOMAD_CLIENT_CERT environment variable)
   </td>
 </tr>
 <tr>
   <td><code>spark.nomad.tls.trustStorePassword</code></td>
   <td></td>
   <td>
-    Path to a .pem file containing the private key corresponding to the certificate in spark.nomad.tls.cert
+    Path to a .pem file containing the private key corresponding to the certificate in spark.nomad.tls.cert (falls back to the NOMAD_CLIENT_KEY environment variable)
   </td>
 </tr>
 </table>
