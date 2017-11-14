@@ -27,10 +27,11 @@ private[spark] object ExecutorTask
 
   val LOG_KEY_FOR_ALLOC_ID = "nomad_alloc_id"
 
-  private val PROPERTIES_NOT_TO_FORWARD_TO_EXECUTOR = scala.collection.Set(
+  private val PROPERTIES_NOT_TO_FORWARD_TO_EXECUTOR = scala.collection.Set[String](
     "spark.driver.port",
     "spark.blockManager.port",
-    "spark.ui.port")
+    "spark.ui.port",
+    NomadClusterManagerConf.AUTH_TOKEN.key)
 
   private val executorPort = ConfigurablePort("executor")
 

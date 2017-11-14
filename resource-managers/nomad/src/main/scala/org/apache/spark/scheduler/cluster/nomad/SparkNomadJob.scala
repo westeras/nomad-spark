@@ -40,7 +40,15 @@ private[spark] object SparkNomadJob extends Logging {
 
   val REGION =
     ConfigBuilder("spark.nomad.region")
-      .doc("The Nomad region to use (defaults to the region of the first Nomad server contacted)")
+      .doc("The Nomad region to use (falls back to the NOMAD_REGION environment variable, " +
+        "then to the region of the first Nomad server contacted)")
+      .stringConf
+      .createOptional
+
+  val NAMESPACE =
+    ConfigBuilder("spark.nomad.namespace")
+      .doc("The Nomad namespace to use (falls back to the NOMAD_NAMESPACE environment variable, " +
+        "then to Nomad's default namespace)")
       .stringConf
       .createOptional
 
@@ -183,6 +191,7 @@ private[spark] object SparkNomadJob extends Logging {
     applyDefault(job.getType)(job.setType("batch"))
     applyConf(conf, NOMAD_JOB_PRIORITY, job.getPriority)(job.setPriority(_))
     applyConf(conf, REGION, job.getRegion)(job.setRegion)
+    applyConf(conf, NAMESPACE, job.getNamespace)(job.setNamespace)
 
     def asJavaList(commaSeparated: String): java.util.List[String] =
       commaSeparated.split(",").toSeq
@@ -200,7 +209,8 @@ private[spark] object SparkNomadJob extends Logging {
       s"Will run as Nomad job [${job.getId}]" +
         s" with priority ${job.getPriority}" +
         s" in datacenter(s) [${job.getDatacenters.asScala.mkString(",")}]" +
-        Option(job.getRegion).fold("")(r => s" in region [$r]")
+        Option(job.getRegion).fold("")(r => s" in region [$r]") +
+        Option(job.getNamespace).fold("")(n => s" in namespace [$n]")
     )
 
     val driverTemplate = find(job, DriverTaskGroup)
