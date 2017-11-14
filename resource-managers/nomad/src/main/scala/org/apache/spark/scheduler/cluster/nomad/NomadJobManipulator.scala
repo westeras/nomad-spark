@@ -97,7 +97,7 @@ private[spark] object NomadJobManipulator extends Logging {
 
     val job = jobDescriptor match {
 
-      case ExistingJob(jobId, _) =>
+      case ExistingJob(jobId, _, _) =>
         logInfo(s"Fetching current state of existing Nomad job $jobId")
         val response = nomad.jobs.info(jobId)
         logDebug(s"State: ${response.getRawEntity}")
