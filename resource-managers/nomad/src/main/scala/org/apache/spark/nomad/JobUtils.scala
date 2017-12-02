@@ -32,6 +32,7 @@ import com.hashicorp.nomad.scalasdk._
 import org.apache.log4j.{Level, LogManager}
 
 import org.apache.spark.internal.Logging
+import org.apache.spark.scheduler.cluster.nomad.SparkNomadTaskGroupType
 
 private[spark] class JobUtils(api: NomadScalaApi) extends Logging {
 
