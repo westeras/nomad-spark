@@ -20,7 +20,7 @@ package org.apache.spark.deploy.nomad
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
-import com.hashicorp.nomad.apimodel.Evaluation
+import com.hashicorp.nomad.apimodel.{Evaluation, Job}
 import com.hashicorp.nomad.javasdk.WaitStrategy
 import com.hashicorp.nomad.scalasdk.NomadScalaApi
 
@@ -28,7 +28,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.internal.Logging
 import org.apache.spark.launcher.{LauncherBackend, SparkAppHandle}
 import org.apache.spark.nomad.{EvaluationUtils, JobUtils}
-import org.apache.spark.scheduler.cluster.nomad.SparkNomadJobController
+import org.apache.spark.scheduler.cluster.nomad.{DriverTask, DriverTaskGroup, SparkNomadJob, SparkNomadJobController}
 
 /**
  * Launches an application in a Nomad cluster.
@@ -61,9 +61,9 @@ private[spark] class NomadClusterModeLauncher(
 
   def submit(): Unit = {
     try {
-      val evaluation = jobController.startDriver()
+      val (job, evaluation) = jobController.startDriver()
       logInfo(s"Nomad job with driver task submitted")
-      reportOutcome(evaluation)
+      reportOutcome(job, evaluation)
     } catch {
       case e: Throwable =>
         logError("Driver failure", e)
@@ -72,7 +72,7 @@ private[spark] class NomadClusterModeLauncher(
     }
   }
 
-  def reportOutcome(initialEvaluation: Evaluation): Unit = {
+  def reportOutcome(job: Job, initialEvaluation: Evaluation): Unit = {
     launcherBackend.setState(SparkAppHandle.State.SUBMITTED)
 
     val monitorUntil = clusterModeConf.monitorUntil.getOrElse {
@@ -92,16 +92,20 @@ private[spark] class NomadClusterModeLauncher(
         case Submitted =>
         // done
         case Scheduled =>
+          val taskGroup = SparkNomadJob.find(job, DriverTaskGroup).get
+          val taskGroupName = taskGroup.getName
+          val driverTaskName = DriverTaskGroup.find(taskGroup, DriverTask).get.getName
           val (nodeId, sparkUiAddress) =
-            jobUtils.pollTaskGroupAllocation(evaluation.getJobId, "driver", waitForever) {
+            jobUtils.pollTaskGroupAllocation(evaluation.getJobId, taskGroupName, waitForever) {
               alloc =>
-                JobUtils.extractPortAddress(alloc, "driver", "SparkUI")
+                JobUtils.extractPortAddress(alloc, driverTaskName, "SparkUI")
                   .map(alloc.getNodeId -> _)
             }
           log.info(
             s"The driver's Spark UI will be served on node $nodeId at http://$sparkUiAddress/"
           )
         case Complete =>
+
           jobUtils.traceTask(evaluation.getJobId, "driver", "driver", waitForever) {
             launcherBackend.setState(SparkAppHandle.State.RUNNING)
           }
