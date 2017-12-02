@@ -79,7 +79,7 @@ private[spark] abstract class SparkNomadTaskGroupType(
     applyConf(conf, RETRY_INTERVAL_NANOS, policy.getInterval)(policy.setInterval(_))
   }
 
-  protected def find(taskGroup: TaskGroup, taskType: SparkNomadTaskType): Option[Task] = {
+  def find(taskGroup: TaskGroup, taskType: SparkNomadTaskType): Option[Task] = {
     taskGroup.getTasks match {
       case null => None
       case tasks => tasks.asScala.find(taskType.isTypeOf)
