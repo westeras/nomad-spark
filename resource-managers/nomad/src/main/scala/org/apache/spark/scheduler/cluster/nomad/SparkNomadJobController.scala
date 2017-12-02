@@ -35,7 +35,7 @@ private[spark] class SparkNomadJobController(jobManipulator: NomadJobManipulator
 
   def jobId: String = jobManipulator.jobId
 
-  def startDriver(): Evaluation = {
+  def startDriver(): (Job, Evaluation) = {
     logInfo(s"Starting driver in Nomad job ${jobId}")
     jobManipulator.create()
   }
