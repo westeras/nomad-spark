@@ -34,8 +34,8 @@ private[spark] class NomadJobManipulator(val nomad: NomadScalaApi, private var j
 
   def jobId: String = job.getId
 
-  def create(): Evaluation = {
-    register()
+  def create(): (Job, Evaluation) = {
+    (job, register())
   }
 
   @tailrec
