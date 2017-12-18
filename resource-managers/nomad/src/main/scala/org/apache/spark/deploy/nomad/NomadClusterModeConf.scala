@@ -55,6 +55,13 @@ private[spark] object NomadClusterModeConf {
       .stringConf
       .createOptional
 
+  val SYSTEM_EXIT_ON_MAIN_COMPLETION =
+    ConfigBuilder("spark.nomad.cluster.systemExitOnMainCompletion")
+      .doc("When true, the application will be terminated if the main thread completes. " +
+        "Normally the JVM exits when all non-daemon threads have finished.")
+      .booleanConf
+      .createWithDefault(false)
+
   def apply(conf: SparkConf, command: ApplicationRunCommand): NomadClusterModeConf = {
 
     val backendConf = NomadClusterManagerConf(conf, Some(command))
