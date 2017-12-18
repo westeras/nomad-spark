@@ -129,11 +129,30 @@ class NomadClusterSuite extends BaseNomadClusterSuite {
 
   test("failure in cluster after sc initialization is reported to launcher") {
     val finalState = runSpark(ClusterMode, nomadTestApp[ThrowExceptionAfterContextInit.type],
-      extraConf = Map("spark.nomad.driver.retryAttempts" -> "2")
+      extraConf = Map("spark.nomad.driver.retryAttempts" -> "0")
     )
     finalState should be (SparkAppHandle.State.FAILED)
   }
 
+  test("stop application on main thread completion in client mode when requested") {
+    val finalState = runSpark(ClusterMode, nomadTestApp[MainThreadLeavesChildRunning.type],
+      extraConf = Map(
+        "spark.nomad.driver.retryAttempts" -> "0",
+        "spark.nomad.cluster.systemExitOnMainCompletion" -> "true"
+      )
+    )
+    finalState should be (SparkAppHandle.State.FINISHED)
+  }
+
+  test("stop application on main thread failure in client mode when requested") {
+    val finalState = runSpark(ClusterMode, nomadTestApp[MainThreadDiesAndLeavesChildRunning.type],
+      extraConf = Map(
+        "spark.nomad.driver.retryAttempts" -> "0",
+        "spark.nomad.cluster.systemExitOnMainCompletion" -> "true"
+      )
+    )
+    finalState should be (SparkAppHandle.State.FAILED)
+  }
 
   test("user class path first in client mode") {
     testUserClassPathFirst(ClientMode)
