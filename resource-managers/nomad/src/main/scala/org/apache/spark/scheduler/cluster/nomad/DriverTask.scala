@@ -24,7 +24,8 @@ import com.hashicorp.nomad.apimodel.{Service, Task}
 import org.apache.http.HttpHost
 
 import org.apache.spark.SparkConf
-import org.apache.spark.deploy.nomad.ApplicationRunCommand
+import org.apache.spark.deploy.nomad.{ApplicationRunCommand, SystemExitOnMainCompletion}
+import org.apache.spark.deploy.nomad.NomadClusterModeConf.SYSTEM_EXIT_ON_MAIN_COMPLETION
 import org.apache.spark.deploy.nomad.NomadClusterModeLauncher.{PrimaryJar, PrimaryPythonFile, PrimaryRFile}
 import org.apache.spark.internal.config.{DRIVER_MEMORY, PY_FILES}
 import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.JOB_TEMPLATE
@@ -91,7 +92,16 @@ private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", 
       explicitConf ++ forwardedConf
     }
 
-    val command = parameters.command
+    val command =
+      if (conf.get(SYSTEM_EXIT_ON_MAIN_COMPLETION)) {
+        parameters.command.copy(
+          mainClass = SystemExitOnMainCompletion.getClass.getName.stripSuffix("$"),
+          arguments = parameters.command.mainClass +: parameters.command.arguments
+        )
+      } else {
+        parameters.command
+      }
+
     val submitOptions: Seq[String] = Seq(
       "--master=" + parameters.nomadUrl.fold("nomad")("nomad:" + _),
       "--driver-class-path=" +
