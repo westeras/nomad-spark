@@ -205,7 +205,7 @@ abstract class BaseNomadClusterSuite extends SparkFunSuite with BeforeAndAfterEa
       .setPropertiesFile(propsFile)
       .addSparkArg("--verbose")
       .addSparkArg("--driver-memory", "600m")
-      .addSparkArg("--executor-memory", "500m")
+      .addSparkArg("--executor-memory", "600m")
       .addAppArgs(appArgs.toArray: _*)
 
     if (deployMode == ClientMode) hostnameAsSeenFromNomad.foreach { hostname =>
