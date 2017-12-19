@@ -49,18 +49,11 @@ To get started, see Nomad's official
 and [embedded Spark quickstart](https://github.com/hashicorp/nomad/tree/master/terraform/examples/spark)
 to give the integration a test drive on AWS or Azure.
 
-### Nomad 0.6 builds
+Builds for Nomad 0.7 and later are available on the [releases page](https://github.com/hashicorp/nomad-spark/releases). Builds for Nomad 0.6 are available below:
 
 - [Spark 2.1.0](https://s3.amazonaws.com/nomad-spark/spark-2.1.0-bin-nomad.tgz)
 - [Spark 2.1.1](https://s3.amazonaws.com/nomad-spark/spark-2.1.1-bin-nomad.tgz)
 - [Spark 2.2.0](https://s3.amazonaws.com/nomad-spark/spark-2.2.0-bin-nomad.tgz)
-
-### Nomad 0.7 builds
-
-- [Spark 2.1.0](https://s3.amazonaws.com/nomad-spark/spark-2.1.0-bin-nomad-0.7.0.tgz)
-- [Spark 2.1.1](https://s3.amazonaws.com/nomad-spark/spark-2.1.1-bin-nomad-0.7.0.tgz)
-- [Spark 2.1.2](https://s3.amazonaws.com/nomad-spark/spark-2.1.2-bin-nomad-0.7.0.tgz)
-- [Spark 2.2.0](https://s3.amazonaws.com/nomad-spark/spark-2.2.0-bin-nomad-0.7.0.tgz)
 
 ### Creating Your Own Build
 
