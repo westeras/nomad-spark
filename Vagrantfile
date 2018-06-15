@@ -14,8 +14,13 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "dependencies", type: "shell", inline: <<-SHELL
     apt-get update
-    apt-get install -y openjdk-8-jdk-headless unzip docker.io
+    apt-get install -y openjdk-8-jdk-headless unzip
     ln -s "$(which python3)" /usr/local/python
+  SHELL
+
+  config.vm.provision "docker", type: "shell", inline: <<-SHELL
+    curl -fsSL get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
   SHELL
 
   config.vm.provision "nomad", type: "shell", inline: <<-SHELL
