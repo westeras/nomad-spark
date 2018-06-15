@@ -30,9 +30,10 @@ job "template" {
     }
 
     task "some-driver-sidecar" {
-      driver = "exec"
+      driver = "docker"
       config {
-        command = "/bin/bash"
+        image = "busybox"
+        command = "/bin/sh"
         args = [ "-c", "echo hi" ]
       }
       resources {
@@ -60,9 +61,10 @@ job "template" {
     }
 
     task "some-executor-sidecar" {
-      driver = "exec"
+      driver = "docker"
       config {
-        command = "/bin/bash"
+        image = "busybox"
+        command = "/bin/sh"
         args = [ "-c", "echo hi" ]
       }
       resources {
