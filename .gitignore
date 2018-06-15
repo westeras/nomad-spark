@@ -87,3 +87,5 @@ spark-warehouse/
 *.Rproj.*
 
 .Rproj.user
+
+/.vagrant/
