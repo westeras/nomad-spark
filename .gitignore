@@ -99,3 +99,4 @@ spark-warehouse/
 
 # For SBT
 .jvmopts
+/.vagrant/
