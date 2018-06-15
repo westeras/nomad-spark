@@ -37,14 +37,15 @@
                     },
                     {
                         "Name": "some-driver-sidecar",
-                        "Driver": "exec",
+                        "Driver": "docker",
                         "User": "",
                         "Config": {
                             "args": [
                                 "-c",
                                 "echo hi"
                             ],
-                            "command": "/bin/bash"
+                            "command": "/bin/sh",
+                            "image": "busybox"
                         },
                         "Constraints": null,
                         "Env": null,
@@ -114,14 +115,15 @@
                     },
                     {
                         "Name": "some-executor-sidecar",
-                        "Driver": "exec",
+                        "Driver": "docker",
                         "User": "",
                         "Config": {
                             "args": [
                                 "-c",
                                 "echo hi"
                             ],
-                            "command": "/bin/bash"
+                            "command": "/bin/sh",
+                            "image": "busybox"
                         },
                         "Constraints": null,
                         "Env": null,
