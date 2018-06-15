@@ -287,7 +287,7 @@ private[spark] abstract class SparkNomadTaskType(
           .setRelativeDest(workDir)
           .setGetterSource(url.toString)
         if (!unarchive) {
-          val options = Map("archive" -> false)
+          val options = Map("archive" -> "false")
           artifact.setGetterOptions(options.asJava)
         }
         file -> Some(artifact)
