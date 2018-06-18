@@ -35,7 +35,7 @@ private[spark] class SparkNomadJobController(jobManipulator: NomadJobManipulator
 
   def jobId: String = jobManipulator.jobId
 
-  def startDriver(): (Job, Evaluation) = {
+  def startDriver(): Option[Evaluation] = {
     logInfo(s"Starting driver in Nomad job ${jobId}")
     jobManipulator.create()
   }
@@ -48,13 +48,14 @@ private[spark] class SparkNomadJobController(jobManipulator: NomadJobManipulator
   }
 
   def initialiseExecutors(
+      jobConf: CommonConf,
       conf: SparkConf,
       driverUrl: String,
       count: Int
   ): Unit = {
     jobManipulator.updateJob(startIfNotYetRunning = count > 0) { job =>
       val group = SparkNomadJob.find(job, ExecutorTaskGroup).get
-      ExecutorTaskGroup.initialize(conf, group, driverUrl, count)
+      ExecutorTaskGroup.initialize(jobConf, conf, group, driverUrl, count)
     }
   }
 
