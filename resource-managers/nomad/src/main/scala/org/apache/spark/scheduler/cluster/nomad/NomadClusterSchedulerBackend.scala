@@ -26,6 +26,7 @@ import org.apache.spark.rpc.{ RpcCallContext, RpcEndpointAddress, RpcEnv }
 import org.apache.spark.scheduler.TaskSchedulerImpl
 import org.apache.spark.scheduler.cluster._
 import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages.{ RegisterExecutor, RequestExecutors }
+import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.CommonConf
 import org.apache.spark.util.{ ShutdownHookManager, Utils }
 
 /**
@@ -41,6 +42,7 @@ import org.apache.spark.util.{ ShutdownHookManager, Utils }
 private[spark] class NomadClusterSchedulerBackend(
     scheduler: TaskSchedulerImpl,
     sc: SparkContext,
+    jobConf: CommonConf,
     jobController: SparkNomadJobController,
     staticExecutorInstances: Option[Int]
   )
@@ -129,7 +131,7 @@ private[spark] class NomadClusterSchedulerBackend(
         conf.get("spark.driver.port").toInt,
         CoarseGrainedSchedulerBackend.ENDPOINT_NAME).toString
 
-      jobController.initialiseExecutors(conf, driverUrl, staticExecutorsToRequest.getOrElse(0))
+      jobController.initialiseExecutors(jobConf, conf, driverUrl, staticExecutorsToRequest.getOrElse(0))
     }
 
     override def receiveAndReply(context: RpcCallContext): PartialFunction[Any, Unit] = ({

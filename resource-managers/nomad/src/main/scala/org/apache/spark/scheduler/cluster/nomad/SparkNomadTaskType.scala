@@ -171,16 +171,15 @@ private[spark] abstract class SparkNomadTaskType(
   protected def appendArguments(
       task: Task,
       arguments: Seq[String],
-      removeOld: Boolean = false
+      idempotent: Boolean = false
   ): Unit = {
     Option(task.getConfig).flatMap(opts => Option(opts.get("args"))) match {
       case None => task.addConfig("args", new util.ArrayList(arguments.asJava))
       case Some(javaArgs) =>
         val args = javaArgs.asInstanceOf[java.util.List[String]].asScala
-        if (removeOld) {
-          args.remove(args.length - arguments.length, arguments.length)
+        if (!(idempotent && args.endsWith(arguments))) {
+          args.appendAll(arguments)
         }
-        args.appendAll(arguments)
     }
   }
 

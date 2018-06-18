@@ -39,22 +39,12 @@ private[spark] object ExecutorTask
       jobConf: SparkNomadJob.CommonConf,
       conf: SparkConf,
       task: Task,
-      shuffleServicePortPlaceholder: Option[String],
-      reconfiguring: Boolean
+      shuffleServicePortPlaceholder: Option[String]
   ): Task = {
-
-    val cores = conf.getInt("spark.executor.cores", 1)
 
     val blockManagerPort = ConfigurablePort("blockManager")
 
     super.configure(jobConf, conf, task, Seq(executorPort, blockManagerPort), "spark-class")
-
-    appendArguments(task, Seq(
-      "org.apache.spark.executor.NomadExecutorBackend",
-      "--hostname", executorPort.ipPlaceholder,
-      "--app-id", jobConf.appId,
-      "--cores", cores.toString
-    ), removeOld = reconfiguring)
 
     conf.getExecutorEnv.foreach((task.addEnv _).tupled)
 
@@ -91,8 +81,22 @@ private[spark] object ExecutorTask
     task
   }
 
-  def addDriverUrlArguments(task: Task, driverUrl: String): Unit = {
-    appendArguments(task, Seq("--driver-url", driverUrl))
+  def addDriverArguments(
+      jobConf: SparkNomadJob.CommonConf,
+      conf: SparkConf,
+      task: Task,
+      driverUrl: String
+  ): Unit = {
+    appendArguments(task,
+      Seq(
+        "org.apache.spark.executor.NomadExecutorBackend",
+        "--hostname", executorPort.ipPlaceholder,
+        "--app-id", jobConf.appId,
+        "--cores", conf.getInt("spark.executor.cores", 1).toString,
+        "--driver-url",
+        driverUrl),
+      idempotent = true
+    )
   }
 
 }
