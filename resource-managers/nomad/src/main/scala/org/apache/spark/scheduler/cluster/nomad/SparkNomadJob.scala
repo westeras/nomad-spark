@@ -303,7 +303,7 @@ private[spark] object SparkNomadJob extends Logging {
     }
   }
 
-  private def applyDefault[A](getter: => AnyRef)(set: => Unit): Unit =
+  def applyDefault[A](getter: => AnyRef)(set: => Unit): Unit =
     if (getter == null) {
       set
     }
