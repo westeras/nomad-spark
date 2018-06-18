@@ -186,7 +186,8 @@ abstract class BaseNomadClusterSuite extends SparkFunSuite with BeforeAndAfterEa
       extraJars: Seq[File] = Nil,
       extraFiles: Seq[File] = Nil,
       extraConf: Map[String, String] = Map(),
-      extraEnv: Map[String, String] = Map()): State = {
+      extraEnv: Map[String, String] = Map(),
+      actionBeforeWaiting: SparkAppHandle => Unit = _ => ()): State = {
 
     val propsFile = createConfFile(extraClassPath = extraClassPath, extraConf = extraConf)
 
@@ -226,6 +227,9 @@ abstract class BaseNomadClusterSuite extends SparkFunSuite with BeforeAndAfterEa
     launcher.setVerbose(true)
 
     val handle = launcher.startApplication()
+
+    actionBeforeWaiting(handle)
+
     try {
       eventually(timeout(3 minutes), interval(1 second)) {
         val state = handle.getState()
