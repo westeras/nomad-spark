@@ -95,18 +95,19 @@ private[spark] class NomadClusterModeLauncher(
         case Submitted =>
         // done
         case Scheduled =>
+          val (driverGroup, driverTask) = jobController.driverGroupAndTaskNames
           val (nodeId, sparkUiAddress) =
-            jobUtils.pollTaskGroupAllocation(evaluation.getJobId, "driver", waitForever) {
+            jobUtils.pollTaskGroupAllocation(evaluation.getJobId, driverGroup, waitForever) {
               alloc =>
-                JobUtils.extractPortAddress(alloc, "driver", "SparkUI")
+                JobUtils.extractPortAddress(alloc, driverTask, "SparkUI")
                   .map(alloc.getNodeId -> _)
             }
           log.info(
             s"The driver's Spark UI will be served on node $nodeId at http://$sparkUiAddress/"
           )
         case Complete =>
-
-          jobUtils.traceTask(evaluation.getJobId, "driver", "driver", waitForever) {
+          val (driverGroup, driverTask) = jobController.driverGroupAndTaskNames
+          jobUtils.traceTask(evaluation.getJobId, driverGroup, driverTask, waitForever) {
             launcherBackend.setState(SparkAppHandle.State.RUNNING)
           }
           logInfo("Driver completed successfully")
