@@ -46,18 +46,19 @@ private[spark] object ExecutorTaskGroup
       }
 
     ExecutorTask.configure(
-      jobConf, conf, findOrAdd(group, ExecutorTask), shuffleServicePortPlaceholder, reconfiguring)
+      jobConf, conf, findOrAdd(group, ExecutorTask), shuffleServicePortPlaceholder)
   }
 
   def initialize(
+      jobConf: SparkNomadJob.CommonConf,
       conf: SparkConf,
       group: TaskGroup,
       driverUrl: String,
       initialExecutors: Int
   ): Unit = {
     val task = find(group, ExecutorTask).get
-    configure(CommonConf(conf), conf, group, reconfiguring = true)
-    ExecutorTask.addDriverUrlArguments(task, driverUrl)
+    configure(jobConf, conf, group, reconfiguring = true)
+    ExecutorTask.addDriverArguments(jobConf, conf, task, driverUrl)
 
     group.setCount(initialExecutors)
   }
