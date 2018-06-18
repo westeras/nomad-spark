@@ -61,7 +61,10 @@ private[spark] class NomadClusterModeLauncher(
     try {
       val evaluation = jobController.startDriver()
       logInfo(s"Nomad job with driver task submitted")
-      reportOutcome(evaluation)
+      evaluation match {
+        case None => launcherBackend.setState(SparkAppHandle.State.FINISHED)
+        case Some(e) => reportOutcome(e)
+      }
     } catch {
       case e: Throwable =>
         logError("Driver failure", e)
