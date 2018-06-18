@@ -35,6 +35,8 @@ private[spark] class NomadJobManipulator(val nomad: NomadScalaApi, private var j
 
   def jobId: String = job.getId
 
+  def jobSnapshot: Job = NomadJson.deserialize(NomadJson.serialize(job), classOf[Job])
+
   def create(): Option[Evaluation] = {
     register()
   }
