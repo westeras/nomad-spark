@@ -20,8 +20,9 @@ package org.apache.spark.scheduler.cluster.nomad
 import scala.annotation.tailrec
 
 import com.hashicorp.nomad.apimodel.{Evaluation, Job, Node}
-import com.hashicorp.nomad.javasdk.{ErrorResponseException, WaitStrategy}
+import com.hashicorp.nomad.javasdk.{ErrorResponseException, NomadJson, WaitStrategy}
 import com.hashicorp.nomad.scalasdk.NomadScalaApi
+import org.apache.commons.lang3.StringUtils
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.scheduler.cluster.nomad.NomadClusterManagerConf.{ExistingJob, JobDescriptor, NewJob}
@@ -34,8 +35,8 @@ private[spark] class NomadJobManipulator(val nomad: NomadScalaApi, private var j
 
   def jobId: String = job.getId
 
-  def create(): (Job, Evaluation) = {
-    (job, register())
+  def create(): Option[Evaluation] = {
+    register()
   }
 
   @tailrec
@@ -73,17 +74,23 @@ private[spark] class NomadJobManipulator(val nomad: NomadScalaApi, private var j
     finally logInfo(s"Nomad API closed")
   }
 
-  protected def register(): Evaluation = {
+  protected def register(): Option[Evaluation] = {
     val oldIndex = job.getJobModifyIndex
-    val evaluation =
-      nomad.evaluations.pollForCompletion(
-        nomad.jobs.register(job, modifyIndex = Some(oldIndex)),
-        WaitStrategy.WAIT_INDEFINITELY
-      ).getValue
-    val newIndex = evaluation.getJobModifyIndex
-    log.info(s"Registered Nomad job $jobId (job modify index $oldIndex -> $newIndex)")
-    job.setJobModifyIndex(newIndex)
-    evaluation
+    val registrationResponse = nomad.jobs.register(job, modifyIndex = Some(oldIndex))
+    if (StringUtils.isEmpty(registrationResponse.getValue)) {
+      log.info(s"Registered Nomad job $jobId (no evaluation produced)")
+      None
+    } else {
+      val evaluation =
+        nomad.evaluations.pollForCompletion(
+          registrationResponse,
+          WaitStrategy.WAIT_INDEFINITELY
+        ).getValue
+      val newIndex = evaluation.getJobModifyIndex
+      log.info(s"Registered Nomad job $jobId (job modify index $oldIndex -> $newIndex)")
+      job.setJobModifyIndex(newIndex)
+      Some(evaluation)
+    }
   }
 
   private[this] def nomadHttpBaseUrl(node: Node): String =
@@ -97,11 +104,13 @@ private[spark] object NomadJobManipulator extends Logging {
 
     val job = jobDescriptor match {
 
-      case ExistingJob(jobId, _, _) =>
-        logInfo(s"Fetching current state of existing Nomad job $jobId")
-        val response = nomad.jobs.info(jobId)
-        logDebug(s"State: ${response.getRawEntity}")
-        response.getValue
+      case ExistingJob(allocId, _, _) =>
+        logInfo(s"Fetching current state of Nomad allocation $allocId")
+        val response = nomad.allocations.info(allocId)
+        logDebug(s"Allocation state: ${response.getRawEntity}")
+        val job = response.getValue.getJob
+        logInfo(s"Found Nomad job ${job.getId}")
+        job
 
       case NewJob(job) =>
         job

@@ -53,6 +53,7 @@ private[spark] class NomadClusterManager extends ExternalClusterManager with Log
     new NomadClusterSchedulerBackend(
       scheduler.asInstanceOf[TaskSchedulerImpl],
       sc,
+      clusterManagerConf.jobConf,
       jobController,
       clusterManagerConf.staticExecutorInstances)
   }
