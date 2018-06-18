@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets.UTF_8
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
+import com.hashicorp.nomad.javasdk.NomadApiConfiguration
+import com.hashicorp.nomad.scalasdk.NomadScalaApi
 import org.apache.commons.io.IOUtils
 import org.scalatest.concurrent.Eventually._
 
@@ -388,6 +390,45 @@ class NomadClusterSuite extends BaseNomadClusterSuite {
     executorBar.get should not be "NOT SET"
   }
 
+  test("run in passive cluster mode") {
+    val configBuilder = new NomadApiConfiguration.Builder()
+    nomadTestAddress.foreach(configBuilder.setAddress)
+    val nomadApi = NomadScalaApi(configBuilder.build())
+    val finalState = try {
+      runSpark(
+        ClusterMode,
+        nomadTestApp[EnvironmentPostingTestDriver.type],
+        appArgs = Seq(httpServer.url("/driver/"), httpServer.url("/executor/"),
+          "NOMAD_ADDR_some_driver_sidecar_foo",
+          "NOMAD_ADDR_some_executor_sidecar_bar"
+        ),
+        extraConf = Map(
+          "spark.nomad.cluster.passive" -> "true"
+        ),
+        actionBeforeWaiting = handle => {
+          eventually(timeout(1 minute), interval(1 second)) {
+            assert(handle.getState == SparkAppHandle.State.SUBMITTED)
+          }
+          val job = nomadApi.jobs.info(handle.getAppId).getValue
+          val driverGroup = SparkNomadJob.find(job, DriverTaskGroup).get
+          assert(driverGroup.getCount == 0)
+          driverGroup.setCount(1)
+          nomadApi.jobs.register(job)
+        }
+      )
+    } finally {
+      nomadApi.close()
+    }
+    checkResult(finalState,
+      "/driver/NOMAD_ADDR_some_executor_sidecar_bar" -> "NOT SET",
+      "/executor/NOMAD_ADDR_some_driver_sidecar_foo" -> "NOT SET")
+
+    val driverFoo = httpServer.valuePutToPath("/driver/NOMAD_ADDR_some_driver_sidecar_foo")
+    val executorBar = httpServer.valuePutToPath("/executor/NOMAD_ADDR_some_executor_sidecar_bar")
+
+    driverFoo.get should not be "NOT SET"
+    executorBar.get should not be "NOT SET"
+  }
 
 }
 
