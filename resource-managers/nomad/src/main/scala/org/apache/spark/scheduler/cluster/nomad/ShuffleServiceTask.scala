@@ -47,7 +47,7 @@ private[spark] object ShuffleServiceTask
         .addEnv("SPARK_DAEMON_MEMORY", jvmMemory(conf, task))
         .addEnv("SPARK_LOCAL_DIRS", "${NOMAD_ALLOC_DIR}")
 
-      appendArguments(task, Seq("org.apache.spark.deploy.ExternalShuffleService", "1"))
+      appendArguments(task, Seq("org.apache.spark.deploy.ExternalShuffleService", "1"), true)
     }
 
     port.placeholderInSiblingTasks(task)
