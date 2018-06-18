@@ -32,6 +32,7 @@ import org.apache.spark.util.Utils
  */
 private[spark] case class NomadClusterModeConf(
     backend: NomadClusterManagerConf,
+    passive: Boolean,
     expectImmediateScheduling: Boolean,
     monitorUntil: Option[Milestone]
 )
@@ -55,6 +56,13 @@ private[spark] object NomadClusterModeConf {
       .stringConf
       .createOptional
 
+  val PASSIVE_MODE =
+    ConfigBuilder("spark.nomad.cluster.passive")
+      .doc("When true, spark-submit will register a Nomad job with a driver count of 0. " +
+        "It is up to the user to change the count to 1 to start the Spark application")
+      .booleanConf
+      .createWithDefault(false)
+
   val SYSTEM_EXIT_ON_MAIN_COMPLETION =
     ConfigBuilder("spark.nomad.cluster.systemExitOnMainCompletion")
       .doc("When true, the application will be terminated if the main thread completes. " +
@@ -77,6 +85,7 @@ private[spark] object NomadClusterModeConf {
 
     NomadClusterModeConf(
       backend = backendConf,
+      passive = conf.get(PASSIVE_MODE),
       expectImmediateScheduling = expectImmediateScheduling,
       monitorUntil = conf.get(MONITOR_UNTIL).map(_.toLowerCase() match {
         case "submitted" if expectImmediateScheduling =>
