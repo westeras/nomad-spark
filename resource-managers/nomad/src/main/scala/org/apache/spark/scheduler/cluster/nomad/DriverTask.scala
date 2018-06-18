@@ -28,7 +28,7 @@ import org.apache.spark.deploy.nomad.{ApplicationRunCommand, SystemExitOnMainCom
 import org.apache.spark.deploy.nomad.NomadClusterModeConf.SYSTEM_EXIT_ON_MAIN_COMPLETION
 import org.apache.spark.deploy.nomad.NomadClusterModeLauncher.{PrimaryJar, PrimaryPythonFile, PrimaryRFile}
 import org.apache.spark.internal.config.{DRIVER_MEMORY, PY_FILES}
-import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.JOB_TEMPLATE
+import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.{JOB_TEMPLATE, SPARK_NOMAD_CLUSTER_MODE}
 import org.apache.spark.util.Utils
 
 private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", DRIVER_MEMORY) {
@@ -40,6 +40,7 @@ private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", 
     "spark.ui.port",
     JOB_TEMPLATE.key,
     PY_FILES.key,
+    SPARK_NOMAD_CLUSTER_MODE,
     "spark.app.id",
     "spark.app.name",
     "spark.submit.deployMode",
@@ -83,7 +84,8 @@ private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", 
         "spark.app.id" -> jobConf.appId,
         "spark.app.name" -> jobConf.appName,
         "spark.driver.port" -> driverPort.placeholder,
-        "spark.blockManager.port" -> blockManagerPort.placeholder
+        "spark.blockManager.port" -> blockManagerPort.placeholder,
+        SPARK_NOMAD_CLUSTER_MODE -> "true"
       ) ++ sparkUIPort.map("spark.ui.port" -> _.placeholder)
 
       val forwardedConf = conf.getAll
