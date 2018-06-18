@@ -21,11 +21,11 @@ import com.hashicorp.nomad.apimodel.Job
 import com.hashicorp.nomad.javasdk.NomadApiConfiguration
 import com.hashicorp.nomad.javasdk.NomadApiConfiguration.nomadAddressAsHttpHost
 import org.apache.http.HttpHost
-
 import org.apache.spark.{SparkConf, SparkException}
 import org.apache.spark.deploy.nomad.ApplicationRunCommand
 import org.apache.spark.internal.config._
 import org.apache.spark.scheduler.cluster.nomad.NomadClusterManagerConf._
+import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.{CommonConf, SPARK_NOMAD_CLUSTER_MODE}
 
 /**
  * Configuration for running a Spark application on a Nomad cluster.
@@ -38,6 +38,7 @@ import org.apache.spark.scheduler.cluster.nomad.NomadClusterManagerConf._
  * rather than encountering them after we've already started interacting with Nomad.
  */
 private[spark] case class NomadClusterManagerConf(
+    jobConf: CommonConf,
     jobDescriptor: JobDescriptor,
     nomadApi: NomadApiConfiguration,
     staticExecutorInstances: Option[Int]
@@ -81,19 +82,17 @@ private[spark] object NomadClusterManagerConf {
   val DEFAULT_EXECUTOR_INSTANCES = 2
 
   sealed trait JobDescriptor {
-    def id: String
     def region: Option[String]
     def namespace: Option[String]
   }
 
   case class ExistingJob(
-      override val id: String,
+      allocId: String,
       override val region: Option[String],
       override val namespace: Option[String]
   ) extends JobDescriptor
 
   case class NewJob(job: Job) extends JobDescriptor {
-    override def id: String = job.getId
     override def region: Option[String] = Option(job.getRegion)
     override def namespace: Option[String] = Option(job.getNamespace)
   }
@@ -159,19 +158,23 @@ private[spark] object NomadClusterManagerConf {
 
     val authToken = conf.get(AUTH_TOKEN)
 
+    val jobConf = SparkNomadJob.CommonConf(conf)
+
     val jobDescriptor =
-      if (conf.getBoolean(SparkNomadJob.SPARK_NOMAD_CLUSTER_MODE, defaultValue = false)) {
-        val jobConf = SparkNomadJob.CommonConf(conf)
+      if (conf.getBoolean(SPARK_NOMAD_CLUSTER_MODE, defaultValue = false)) {
         ExistingJob(
-          id = jobConf.appId,
+          allocId = Option(conf.getenv("NOMAD_ALLOC_ID")).getOrElse(throw new RuntimeException(
+            s"$SPARK_NOMAD_CLUSTER_MODE is set, but the NOMAD_ALLOC_ID environment variable is not."
+          )),
           region = conf.get(SparkNomadJob.REGION),
           namespace = conf.get(SparkNomadJob.NAMESPACE)
         )
       } else {
-        NewJob(SparkNomadJob(conf, nomadUrl, command))
+        NewJob(SparkNomadJob(conf, jobConf, nomadUrl, command))
     }
 
     NomadClusterManagerConf(
+      jobConf = jobConf,
       jobDescriptor = jobDescriptor,
       nomadApi = extractApiConf(
         nomadUrl = nomadUrl,
