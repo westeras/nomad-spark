@@ -163,6 +163,7 @@ private[spark] object SparkNomadJob extends Logging {
 
   def apply(
       conf: SparkConf,
+      jobConf: CommonConf,
       nomadUrl: Option[HttpHost],
       driverCommand: Option[ApplicationRunCommand]
   ): Job = {
@@ -179,8 +180,6 @@ private[spark] object SparkNomadJob extends Logging {
         }
         job
     }
-
-    val jobConf = CommonConf(conf)
 
     job
       .setId(jobConf.appId)
