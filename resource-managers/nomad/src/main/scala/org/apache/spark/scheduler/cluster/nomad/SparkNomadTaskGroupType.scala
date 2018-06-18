@@ -64,8 +64,6 @@ private[spark] abstract class SparkNomadTaskGroupType(
       group.setName(role)
     }
 
-    group.setCount(1)
-
     val policy = Option(group.getRestartPolicy).getOrElse {
       val p = new RestartPolicy
       group.setRestartPolicy(p)
