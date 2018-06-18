@@ -35,6 +35,13 @@ private[spark] class SparkNomadJobController(jobManipulator: NomadJobManipulator
 
   def jobId: String = jobManipulator.jobId
 
+  def driverGroupAndTaskNames: (String, String) = {
+    val job = jobManipulator.jobSnapshot
+    val group = SparkNomadJob.find(job, DriverTaskGroup).get
+    val task = DriverTaskGroup.find(group, DriverTask).get
+    (group.getName, task.getName)
+  }
+
   def startDriver(): Option[Evaluation] = {
     logInfo(s"Starting driver in Nomad job ${jobId}")
     jobManipulator.create()
