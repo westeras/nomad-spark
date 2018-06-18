@@ -20,6 +20,7 @@ package org.apache.spark.scheduler.cluster.nomad
 import com.hashicorp.nomad.apimodel.TaskGroup
 
 import org.apache.spark.SparkConf
+import org.apache.spark.deploy.nomad.NomadClusterModeConf
 
 private[spark] object DriverTaskGroup extends SparkNomadTaskGroupType("driver", DriverTask) {
 
@@ -30,6 +31,13 @@ private[spark] object DriverTaskGroup extends SparkNomadTaskGroupType("driver", 
       parameters: DriverTask.Parameters
   ): Unit = {
     configureCommonSettings(jobConf, conf, group)
+
+    if (conf.get(NomadClusterModeConf.PASSIVE_MODE)) {
+      group.setCount(0)
+    } else {
+      SparkNomadJob.applyDefault(group.getCount)(group.setCount(1))
+    }
+
     DriverTask.configure(jobConf, conf, findOrAdd(group, DriverTask), parameters)
   }
 
