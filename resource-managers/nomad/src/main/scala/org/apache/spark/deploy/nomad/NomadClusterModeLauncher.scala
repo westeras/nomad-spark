@@ -61,9 +61,12 @@ private[spark] class NomadClusterModeLauncher(
 
   def submit(): Unit = {
     try {
-      val (job, evaluation) = jobController.startDriver()
+      val evaluation = jobController.startDriver()
       logInfo(s"Nomad job with driver task submitted")
-      reportOutcome(job, evaluation)
+      evaluation match {
+        case None => launcherBackend.setState(SparkAppHandle.State.FINISHED)
+        case Some(e) => reportOutcome(e)
+      }
     } catch {
       case e: Throwable =>
         logError("Driver failure", e)
@@ -72,7 +75,7 @@ private[spark] class NomadClusterModeLauncher(
     }
   }
 
-  def reportOutcome(job: Job, initialEvaluation: Evaluation): Unit = {
+  def reportOutcome(initialEvaluation: Evaluation): Unit = {
     launcherBackend.setState(SparkAppHandle.State.SUBMITTED)
 
     val monitorUntil = clusterModeConf.monitorUntil.getOrElse {
@@ -92,13 +95,10 @@ private[spark] class NomadClusterModeLauncher(
         case Submitted =>
         // done
         case Scheduled =>
-          val taskGroup = SparkNomadJob.find(job, DriverTaskGroup).get
-          val taskGroupName = taskGroup.getName
-          val driverTaskName = DriverTaskGroup.find(taskGroup, DriverTask).get.getName
           val (nodeId, sparkUiAddress) =
-            jobUtils.pollTaskGroupAllocation(evaluation.getJobId, taskGroupName, waitForever) {
+            jobUtils.pollTaskGroupAllocation(evaluation.getJobId, "driver", waitForever) {
               alloc =>
-                JobUtils.extractPortAddress(alloc, driverTaskName, "SparkUI")
+                JobUtils.extractPortAddress(alloc, "driver", "SparkUI")
                   .map(alloc.getNodeId -> _)
             }
           log.info(
