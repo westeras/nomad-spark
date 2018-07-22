@@ -68,8 +68,10 @@ private[spark] class SparkNomadJobController(jobManipulator: NomadJobManipulator
 
   def setExecutorCount(count: Int): Unit = {
     jobManipulator.updateJob(startIfNotYetRunning = count > 0) { job =>
-      SparkNomadJob.find(job, ExecutorTaskGroup).get
-        .setCount(count)
+      val executorGroup = SparkNomadJob.find(job, ExecutorTaskGroup).get
+      if (count > 0 && executorGroup.getCount < count) {
+        executorGroup.setCount(count)
+      }
     }
   }
 
