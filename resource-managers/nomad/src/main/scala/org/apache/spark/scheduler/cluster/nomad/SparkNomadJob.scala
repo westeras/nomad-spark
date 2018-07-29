@@ -120,16 +120,23 @@ private[spark] object SparkNomadJob extends Logging {
       .stringConf
       .createOptional
 
+  val PREVENT_JOB_OVERWRITE =
+    ConfigBuilder("spark.nomad.preventJobOverwrite")
+      .doc("When true, prevents Spark from overwriting an existing job")
+      .booleanConf
+      .createWithDefault(true)
+
   val UTC_TIMESTAMP_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
 
   val SPARK_NOMAD_CLUSTER_MODE = "spark.nomad.clusterMode"
 
   case class CommonConf(
-      appId: String,
-      appName: String,
-      dockerImage: Option[String],
-      dockerAuth: Option[Map[String, String]],
-      sparkDistribution: Option[URI]
+                         appId: String,
+                         appName: String,
+                         dockerImage: Option[String],
+                         dockerAuth: Option[Map[String, String]],
+                         sparkDistribution: Option[URI],
+                         preventOverwrite: Boolean
   )
 
   object CommonConf {
@@ -156,7 +163,8 @@ private[spark] object SparkNomadJob extends Logging {
           ).flatten
           if (entries.nonEmpty) Some(entries.toMap) else None
         },
-        sparkDistribution = conf.get(SPARK_DISTRIBUTION).map(new URI(_))
+        sparkDistribution = conf.get(SPARK_DISTRIBUTION).map(new URI(_)),
+        preventOverwrite = conf.get(PREVENT_JOB_OVERWRITE)
       )
     }
   }
@@ -185,7 +193,7 @@ private[spark] object SparkNomadJob extends Logging {
       .setId(jobConf.appId)
       .setName(jobConf.appName)
       .addMeta("spark.nomad.role", "application")
-      .setJobModifyIndex(BigInteger.ZERO)
+      .setJobModifyIndex(if (jobConf.preventOverwrite) BigInteger.ZERO else null)
 
     applyDefault(job.getType)(job.setType("batch"))
     applyConf(conf, NOMAD_JOB_PRIORITY, job.getPriority)(job.setPriority(_))
