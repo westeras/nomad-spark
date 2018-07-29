@@ -17,6 +17,8 @@
 
 package org.apache.spark.scheduler.cluster.nomad
 
+import java.math.BigInteger
+
 import scala.annotation.tailrec
 
 import com.hashicorp.nomad.apimodel.{Evaluation, Job, Node}
@@ -78,7 +80,14 @@ private[spark] class NomadJobManipulator(val nomad: NomadScalaApi, private var j
 
   protected def register(): Option[Evaluation] = {
     val oldIndex = job.getJobModifyIndex
-    val registrationResponse = nomad.jobs.register(job, modifyIndex = Some(oldIndex))
+    val registrationResponse =
+      try nomad.jobs.register(job, modifyIndex = Option(oldIndex))
+      catch {
+        case e: com.hashicorp.nomad.javasdk.ErrorResponseException
+          if BigInteger.ZERO == oldIndex
+            && e.getServerErrorMessage.contains("job already exists") =>
+          throw JobAlreadyExistsException(job.getId, e)
+      }
     if (StringUtils.isEmpty(registrationResponse.getValue)) {
       log.info(s"Registered Nomad job $jobId (no evaluation produced)")
       None
