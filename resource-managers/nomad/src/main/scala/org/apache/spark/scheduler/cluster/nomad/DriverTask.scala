@@ -28,24 +28,27 @@ import org.apache.spark.deploy.nomad.{ApplicationRunCommand, SystemExitOnMainCom
 import org.apache.spark.deploy.nomad.NomadClusterModeConf.SYSTEM_EXIT_ON_MAIN_COMPLETION
 import org.apache.spark.deploy.nomad.NomadClusterModeLauncher.{PrimaryJar, PrimaryPythonFile, PrimaryRFile}
 import org.apache.spark.internal.config.{DRIVER_MEMORY, PY_FILES}
+import org.apache.spark.launcher.SparkLauncher
 import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.{JOB_TEMPLATE, SPARK_NOMAD_CLUSTER_MODE}
 import org.apache.spark.util.Utils
 
 private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", DRIVER_MEMORY) {
 
   private val PROPERTIES_NOT_TO_FORWARD = scala.collection.Set(
+    // spark: not appropriate/relevant
     "spark.master",
+    "spark.submit.deployMode",
+    PY_FILES.key,
+    // nomad: not appropriate/relevant
+    JOB_TEMPLATE.key,
+    // explicitly set below
+    "spark.ui.port",
     "spark.driver.port",
     "spark.blockManager.port",
-    "spark.ui.port",
-    JOB_TEMPLATE.key,
-    PY_FILES.key,
     SPARK_NOMAD_CLUSTER_MODE,
     "spark.app.id",
     "spark.app.name",
-    "spark.submit.deployMode",
-    "spark.driver.extraClassPath",
-    "spark.driver.extraJavaOptions")
+    SparkLauncher.DRIVER_EXTRA_CLASSPATH)
 
   case class Parameters(command: ApplicationRunCommand, nomadUrl: Option[HttpHost])
 
@@ -79,7 +82,6 @@ private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", 
       }
 
     val driverConf: Seq[(String, String)] = {
-
       val explicitConf = Seq(
         "spark.app.id" -> jobConf.appId,
         "spark.app.name" -> jobConf.appName,
@@ -104,12 +106,14 @@ private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", 
         parameters.command
       }
 
+    val driverClassPath =
+      (additionalJarUrls ++ conf.getOption(SparkLauncher.DRIVER_EXTRA_CLASSPATH))
+        .map(j => new URI(j).getPath).mkString(":")
+
     val submitOptions: Seq[String] = (
       Map(
         "--master" -> parameters.nomadUrl.fold("nomad")("nomad:" + _),
-        "--driver-class-path" -> (
-          additionalJarUrls ++ conf.getOption("spark.driver.extraClassPath"))
-        .map(j => new URI(j).getPath).mkString(":")
+        "--driver-class-path" -> driverClassPath
       )
       .withFilter((t) => !t._2.isEmpty)
       .map({ case (key, value) => "%s=%s" format (key, value) })
