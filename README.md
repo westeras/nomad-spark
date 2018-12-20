@@ -2,9 +2,9 @@
 
 This repository is a fork of Apache Spark that natively supports using HashiCorp's
 [Nomad](https://www.nomadproject.io/intro/) as Spark's cluster manager  (as an
-alternative to Hadoop YARN and Mesos). When running on Nomad, the Spark executors
- that run tasks for your Spark application, and optionally the application
- driver itself, run as Nomad tasks in a Nomad job.
+alternative to Hadoop YARN, Mesos or Kubernetes). When running on Nomad, the Spark 
+executors that run tasks for your Spark application, and optionally the application
+driver itself, run as Nomad tasks in a Nomad job.
 
 Sample `spark-submit` command when using Nomad:
 
@@ -14,11 +14,11 @@ spark-submit \
   --master nomad \
   --deploy-mode cluster \
   --conf spark.executor.instances=4 \
-  --conf spark.nomad.sparkDistribution=https://s3.amazonaws.com/nomad-spark/spark-2.1.0-bin-nomad.tgz \
-  https://s3.amazonaws.com/nomad-spark/spark-examples_2.11-2.1.0-SNAPSHOT.jar 100
- ```
+  --conf spark.nomad.sparkDistribution=https://s3.amazonaws.com/nomad-spark/spark-2.4.0-bin-nomad-0.8.6.tgz \
+  https://s3.amazonaws.com/nomad-spark/spark-examples_2.11-2.4.0.jar 100
+```
 
-The ultimate goal is to integrate Nomad into Spark directly, either natively or
+The eventual goal is to integrate Nomad into Spark directly, either natively or
 via a backend/scheduler plugin interface.
 
 ## Benefits of Spark on Nomad
@@ -36,7 +36,7 @@ Nomad is easy to set up and use. It consists of a single binary/process, has a
 simple and intuitive data model, utilizes a
 [declarative job specification](https://www.nomadproject.io/docs/job-specification/index.html)
  and supports high availability and
-[multi-datacenter federation](https://www.nomadproject.io/guides/cluster/federation.html)
+[multi-datacenter federation](https://www.nomadproject.io/guides/operations/federation.html)
  out-of-the-box. Nomad also integrates seamlessly with HashiCorp's other runtime
  tools: [Consul](https://www.nomadproject.io/docs/service-discovery/index.html)
 and [Vault](https://www.nomadproject.io/docs/vault-integration/index.html).
@@ -49,7 +49,10 @@ To get started, see Nomad's official
 and [embedded Spark quickstart](https://github.com/hashicorp/nomad/tree/master/terraform/examples/spark)
 to give the integration a test drive on AWS or Azure.
 
-Builds for Nomad 0.7 and later are available on the [releases page](https://github.com/hashicorp/nomad-spark/releases). Builds for Nomad 0.6 are available below:
+Builds for Nomad 0.8 and later are available on the [releases page](https://github.com/hashicorp/nomad-spark/releases). 
+Builds for Nomad 0.6 are available below:
+
+## Nomad 0.6:
 
 - [Spark 2.1.0](https://s3.amazonaws.com/nomad-spark/spark-2.1.0-bin-nomad.tgz)
 - [Spark 2.1.1](https://s3.amazonaws.com/nomad-spark/spark-2.1.1-bin-nomad.tgz)
