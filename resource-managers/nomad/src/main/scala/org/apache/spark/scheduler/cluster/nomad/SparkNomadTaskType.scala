@@ -191,7 +191,10 @@ private[spark] abstract class SparkNomadTaskType(
   protected def asFileIn(jobConf: SparkNomadJob.CommonConf, task: Task)(url: String): String = {
     val (file, artifact) = asFileAndArtifact(jobConf, new URI(url), false)
     artifact.foreach(task.addArtifacts(_))
-    file.toString
+    file.getScheme match {
+      case "local" => file.getPath
+      case _ => file.toString
+    }
   }
 
   protected def jvmMemory(conf: SparkConf, task: Task): String = {
