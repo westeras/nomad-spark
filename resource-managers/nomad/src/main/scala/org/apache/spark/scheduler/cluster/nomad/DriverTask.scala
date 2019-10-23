@@ -78,7 +78,7 @@ private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", 
       .map(_.split(",").filter(_.nonEmpty))
       .filter(_.nonEmpty)
       .foreach { files =>
-        conf.set("spark.files", files.map(asFileIn(jobConf, task)).map(f => f.stripPrefix("local://")).mkString(","))
+        conf.set("spark.files", files.map(asFileIn(jobConf, task)).mkString(","))
       }
 
     val driverConf: Seq[(String, String)] = {
