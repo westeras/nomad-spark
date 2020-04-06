@@ -1,7 +1,7 @@
 # DEPRECATED
 
-_The Nomad Spark integration is deprecated and will no longer be maintained by
-HashiCorp_. Spark lacks a pluggable scheduler interface, necessitating this
+__The Nomad Spark integration is deprecated and will no longer be maintained by
+HashiCorp__. Spark lacks a pluggable scheduler interface, necessitating this
 independent fork. Maintaining this fork requires significant effort to keep
 current with upstream Spark, persisting correct behavior of our integration while
 tracking Spark's constantly-advancing feature set. Ultimately, we felt that the
