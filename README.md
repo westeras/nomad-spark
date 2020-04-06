@@ -12,4 +12,4 @@ The Nomad team continues to be excited about the future of our ecosystem. We’r
 currently focusing our efforts on building first-class experiences, with
 features such as autoscaling and integrations with Spinnaker and Airflow on the
 horizon. As always, feel free to reach out on our discussion forums at
-(https://discuss.hashicorp.com/c/nomad)[https://discuss.hashicorp.com/c/nomad].
+https://discuss.hashicorp.com/c/nomad.
