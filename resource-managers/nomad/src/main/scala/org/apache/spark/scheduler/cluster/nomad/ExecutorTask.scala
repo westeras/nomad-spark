@@ -19,8 +19,8 @@ package org.apache.spark.scheduler.cluster.nomad
 
 import com.hashicorp.nomad.apimodel.Task
 
-import org.apache.spark.internal.config.EXECUTOR_MEMORY
 import org.apache.spark.{SecurityManager, SparkConf}
+import org.apache.spark.internal.config.EXECUTOR_MEMORY
 import org.apache.spark.util.Utils
 
 private[spark] object ExecutorTask
