@@ -1,0 +1,110 @@
+name: Build Branch
+
+on:
+  push:
+    branches:
+      "**"
+  pull_request:
+    branches:
+      "**"
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        scala: [ '2.11' ]
+        hadoop: [ 'hadoop-2.7' ]
+    name: Build Spark with Scala ${{ matrix.scala }} / Hadoop ${{ matrix.hadoop }}
+
+    steps:
+      - uses: actions/checkout@v2
+      # We split caches because GitHub Action Cache has a 400MB-size limit.
+      - uses: actions/cache@v1
+        with:
+          path: build
+          key: build-${{ hashFiles('**/pom.xml') }}
+          restore-keys: build-
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository/com
+          key: ${{ matrix.scala }}-${{ matrix.hadoop }}-maven-com-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ matrix.scala }}-${{ matrix.hadoop }}-maven-com-
+      - uses: actions/cache@v1
+        with:
+          path: ~/.m2/repository/org
+          key: ${{ matrix.scala }}-${{ matrix.hadoop }}-maven-org-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ matrix.scala }}-${{ matrix.hadoop }}-maven-org-
+      - name: Set up JDK 8
+        uses: actions/setup-java@v1
+        with:
+          java-version: '1.8'
+      - name: Change to Scala ${{ matrix.scala }}
+        run: ./dev/change-scala-version.sh ${{ matrix.scala }}
+      - name: Build Spark Common Modules
+        env:
+          MAVEN_OPTS: "-Xmx3g -XX:ReservedCodeCacheSize=1024m -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN"
+          MAVEN_CLI_OPTS: "--no-transfer-progress"
+        run: |
+          mkdir -p ~/.m2
+          ./build/mvn $MAVEN_CLI_OPTS -pl :spark-sketch_2.11,:spark-kvstore_2.11,:spark-tags_2.11,:spark-network-common_2.11,:spark-network-shuffle_2.11,:spark-unsafe_2.11 clean install
+      - name: Build Spark Launcher Module
+        env:
+          MAVEN_OPTS: "-Xmx3g -XX:ReservedCodeCacheSize=1024m -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN"
+          MAVEN_CLI_OPTS: "--no-transfer-progress"
+        run: ./build/mvn $MAVEN_CLI_OPTS -pl :spark-launcher_2.11 clean install
+      - name: Build Spark Core Module
+        env:
+          MAVEN_OPTS: "-Xmx3g -XX:ReservedCodeCacheSize=1024m -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN"
+          MAVEN_CLI_OPTS: "--no-transfer-progress"
+        run: ./build/mvn $MAVEN_CLI_OPTS -pl :spark-core_2.11 clean install
+      - name: Build Spark SQL Modules
+        env:
+          MAVEN_OPTS: "-Xmx3g -XX:ReservedCodeCacheSize=1024m -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN"
+          MAVEN_CLI_OPTS: "--no-transfer-progress"
+        run: ./build/mvn $MAVEN_CLI_OPTS -DskipTests -Phive-thriftserver -pl :spark-catalyst_2.11,:spark-sql_2.11,:spark-hive_2.11 clean install
+      - name: Build Spark Nomad Modules
+        env:
+          MAVEN_OPTS: "-Xmx3g -XX:ReservedCodeCacheSize=1024m -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN"
+          MAVEN_CLI_OPTS: "--no-transfer-progress"
+        run: ./build/mvn $MAVEN_CLI_OPTS -Pnomad -pl :spark-nomad-test-apps_2.11,:spark-nomad_2.11 -DwildcardSuites=org.apache.spark.scheduler.cluster.nomad.ExecutorTaskTest clean install
+      - name: Build Spark GraphX/MLLib/Streaming Modules
+        env:
+          MAVEN_OPTS: "-Xmx3g -XX:ReservedCodeCacheSize=1024m -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN"
+          MAVEN_CLI_OPTS: "--no-transfer-progress"
+        run: ./build/mvn $MAVEN_CLI_OPTS -DskipTests -pl :spark-graphx_2.11,:spark-mllib_2.11,:spark-mllib-local_2.11,:spark-streaming_2.11 clean install
+      - name: Build Miscellaneous Spark Modules
+        env:
+          MAVEN_OPTS: "-Xmx3g -XX:ReservedCodeCacheSize=1024m -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN"
+          MAVEN_CLI_OPTS: "--no-transfer-progress"
+        run: ./build/mvn $MAVEN_CLI_OPTS -pl :spark-tools_2.11,:spark-assembly_2.11,:spark-repl_2.11 clean install
+  lint:
+    runs-on: ubuntu-latest
+    name: Checkstyle, licenses, dependencies
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '1.8'
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.7'
+          architecture: 'x64'
+      - name: Scala Lint
+        run: ./dev/lint-scala
+      - name: Java Lint (requires Nomad Test Apps)
+        env:
+          MAVEN_OPTS: "-Xmx3g -XX:ReservedCodeCacheSize=1024m -Dorg.slf4j.simpleLogger.defaultLogLevel=WARN"
+          MAVEN_CLI_OPTS: "--no-transfer-progress"
+        run: |
+          ./build/mvn $MAVEN_CLI_OPTS -DskipTests -Pnomad -pl :spark-tags_2.11,:spark-nomad-test-apps_2.11,:spark-nomad_2.11 clean install
+          ./dev/lint-java
+      - name: Python Lint
+        run: |
+          pip install flake8 sphinx numpy
+          ./dev/lint-python
+      - name: License
+        run: ./dev/check-license
+      - name: Dependencies
+        run: ./dev/test-dependencies.sh
