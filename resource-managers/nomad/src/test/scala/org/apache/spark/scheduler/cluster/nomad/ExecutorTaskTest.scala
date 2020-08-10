@@ -134,4 +134,36 @@ class ExecutorTaskTest extends SparkFunSuite {
     }
   }
 
+  test("verify whether input conf 'spark.executor.extraClassPath' is set to" +
+    " env SPARK_EXECUTOR_CLASSPATH") {
+    val commonConf = SparkNomadJob.CommonConf(appName = "app-name-123",
+      appId = "app-id-123",
+      dockerImage = None,
+      dockerAuth = None,
+      sparkDistribution = Some(new URI("local:///spark")),
+      preventOverwrite = true
+    )
+    val sparkConf = new SparkConf()
+    val sparkExtraClasspath = "/hadoop-2.8.5/share/hadoop/tools/lib/hadoop-aws-2.8.5.jar:" +
+      "/hadoop-2.8.5/share/hadoop/tools/lib/aws-java-sdk-core-1.10.6.jar"
+    sparkConf.set("spark.executor.extraClassPath", sparkExtraClasspath)
+    val nomadTask = new Task()
+
+    ExecutorTask.configure(jobConf = commonConf,
+      conf = sparkConf,
+      task = nomadTask,
+      shuffleServicePortPlaceholder = None)
+
+    ExecutorTask.addDriverArguments(jobConf = commonConf,
+      conf = sparkConf,
+      task = nomadTask,
+      driverUrl = "driver/url/3421")
+
+    val actualSparkExecutorClasspath = nomadTask.getEnv.get("SPARK_EXECUTOR_CLASSPATH")
+    val expectedSparkExecutorClasspath =
+      "/hadoop-2.8.5/share/hadoop/tools/lib/hadoop-aws-2.8.5.jar:" +
+      "/hadoop-2.8.5/share/hadoop/tools/lib/aws-java-sdk-core-1.10.6.jar"
+    assert(expectedSparkExecutorClasspath == actualSparkExecutorClasspath)
+  }
+
 }

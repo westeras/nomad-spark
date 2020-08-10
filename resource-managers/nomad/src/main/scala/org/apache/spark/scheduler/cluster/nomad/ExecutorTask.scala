@@ -81,6 +81,10 @@ private[spark] object ExecutorTask
     // The driver will lookup the actual log URLs
     task.addEnv("SPARK_LOG_URL_" + LOG_KEY_FOR_ALLOC_ID, "${NOMAD_ALLOC_ID}")
 
+    if (conf.getOption("spark.executor.extraClassPath").nonEmpty) {
+      task.addEnv("SPARK_EXECUTOR_CLASSPATH", conf.getOption("spark.executor.extraClassPath").get)
+    }
+
     task
   }
 
