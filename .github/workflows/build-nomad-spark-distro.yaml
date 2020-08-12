@@ -25,3 +25,4 @@ jobs:
         run: |
           export VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           git tag v$VERSION-nomad-0.8.6-$(date +'%Y%m%d')
+          git push origin v$VERSION-nomad-0.8.6-$(date +'%Y%m%d')
