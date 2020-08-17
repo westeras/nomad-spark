@@ -107,7 +107,7 @@ private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", 
       }
 
     val driverClassPath =
-      (additionalJarUrls ++ conf.getOption(SparkLauncher.DRIVER_EXTRA_CLASSPATH))
+      (conf.getOption(SparkLauncher.DRIVER_EXTRA_CLASSPATH) ++ additionalJarUrls)
         .map(j => new URI(j).getPath).mkString(":")
 
     val submitOptions: Seq[String] = (
