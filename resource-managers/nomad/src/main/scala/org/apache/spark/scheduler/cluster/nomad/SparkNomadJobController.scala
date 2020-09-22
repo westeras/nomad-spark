@@ -17,6 +17,8 @@
 
 package org.apache.spark.scheduler.cluster.nomad
 
+import scala.concurrent.Future
+
 import com.hashicorp.nomad.apimodel._
 import com.hashicorp.nomad.scalasdk.NomadScalaApi
 
@@ -73,6 +75,31 @@ private[spark] class SparkNomadJobController(jobManipulator: NomadJobManipulator
         executorGroup.setCount(count)
       }
     }
+  }
+
+  def removeExecutors(executorIds: Seq[String]): Future[Boolean] = {
+    try {
+      executorIds
+        .map(f => f.replaceFirst("-\\d+$", ""))
+        .foreach(f => {
+          logInfo("stopping alloc " + f)
+          jobManipulator.stopAlloc(f)
+        })
+    } catch {
+      case e: Exception => logError("caught an exception removing executors", e)
+        return Future.successful(false)
+    }
+
+    val removeCount = executorIds.size
+    jobManipulator.updateJob(startIfNotYetRunning = false) { job =>
+      val executors = SparkNomadJob.find(job, ExecutorTaskGroup).get
+      val currentSize = executors.getCount
+      logInfo(s"changing executor count in job spec from " +
+        s"$currentSize to ${currentSize - removeCount}")
+      executors.setCount(currentSize - removeCount)
+    }
+
+    Future.successful(true)
   }
 
   def resolveExecutorLogUrls(reportedLogUrls: Map[String, String]): Map[String, String] =

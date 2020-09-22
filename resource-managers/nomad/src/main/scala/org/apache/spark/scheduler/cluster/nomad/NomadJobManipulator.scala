@@ -58,6 +58,10 @@ private[spark] class NomadJobManipulator(val nomad: NomadScalaApi, private var j
     }
   }
 
+  def stopAlloc(allocId: String): Unit = {
+    nomad.allocations.stop(allocId)
+  }
+
   def fetchLogUrlsForTask(allocId: String, task: String): Map[String, String] = {
     val allocation = nomad.allocations.info(allocId).getValue
     val node = nomad.nodes.info(allocation.getNodeId).getValue
