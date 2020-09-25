@@ -17,6 +17,8 @@
 
 package org.apache.spark.scheduler.cluster.nomad
 
+import java.util.concurrent.{Callable, ExecutorService, TimeUnit}
+
 import scala.concurrent.Future
 
 import com.hashicorp.nomad.apimodel._
@@ -25,6 +27,7 @@ import com.hashicorp.nomad.scalasdk.NomadScalaApi
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.Logging
 import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.CommonConf
+import org.apache.spark.util.ThreadUtils
 
 /**
  * Manipulates a Nomad job running a Spark application.
@@ -36,6 +39,9 @@ import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.CommonConf
 private[spark] class SparkNomadJobController(jobManipulator: NomadJobManipulator) extends Logging {
 
   def jobId: String = jobManipulator.jobId
+
+  private val executorService: ExecutorService =
+    ThreadUtils.newDaemonSingleThreadExecutor("allocation-stop-wait")
 
   def driverGroupAndTaskNames: (String, String) = {
     val job = jobManipulator.jobSnapshot
@@ -77,14 +83,33 @@ private[spark] class SparkNomadJobController(jobManipulator: NomadJobManipulator
     }
   }
 
+  def waitForAllocRemoval(allocId: String): Unit = {
+    do {
+      Thread.sleep(500)
+    } while (!jobManipulator.isAllocStopped(allocId))
+  }
+
   def removeExecutors(executorIds: Seq[String]): Future[Boolean] = {
     try {
       executorIds
-        .map(f => f.replaceFirst("-\\d+$", ""))
-        .foreach(f => {
-          logInfo("stopping alloc " + f)
-          jobManipulator.stopAlloc(f)
-        })
+        // executor ID == "${allocId}-${epoch}"
+        .map(executorId => executorId.replaceFirst("-\\d+$", ""))
+        // parallelize this collection so we can wait for allocs to stop concurrently
+        .par
+        .map(allocId => {
+          logInfo(s"stopping alloc $allocId")
+          jobManipulator.stopAlloc(allocId)
+          // stop all allocs and wait for them concurrently
+          executorService.submit(new Callable[String] {
+            override def call(): String = {
+              waitForAllocRemoval(allocId)
+              allocId
+            }
+          })
+        }).foreach(f => {
+        val allocId = f.get(10, TimeUnit.SECONDS)
+        logInfo(s"alloc stopped $allocId")
+      })
     } catch {
       case e: Exception => logError("caught an exception removing executors", e)
         return Future.successful(false)
