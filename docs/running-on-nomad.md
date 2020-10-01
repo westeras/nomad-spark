@@ -415,21 +415,18 @@ job "template" {
 # Dynamic Allocation of Executors
 
 By default, the Spark application will use a fixed number of executors.
-Setting `spark.dynamicAllocation` to `true` enables Spark to
-add and remove executors during execution depending on the number of Spark tasks scheduled to run.
-As described in [Dynamic Resource Allocation](http://spark.apache.org/docs/latest/job-scheduling.html#configuration-and-setup),
+Setting `spark.dynamicAllocation.enabled` to `true` enables Spark to add and remove executors during 
+execution depending on the number of Spark tasks scheduled to run. As described in [Dynamic Resource Allocation](http://spark.apache.org/docs/latest/job-scheduling.html#configuration-and-setup),
 dynamic allocation requires that `spark.shuffle.service.enabled` be set to `true`.
 
-On Nomad, setting `spark.shuffle.service.enabled` to `true` adds an additional
-shuffle serivce Nomad task to the executors' task group. This results in a
-one-to-one mapping of executors to shuffle services.
-
-When the executor exits, the shuffle service continues running so that it can serve any results produced by the
-executor. Note that due to the way resource allocation works in Nomad,
-the resources allocated to the executor Nomad task aren't freed until the shuffle service
-is also finished, meaning that they will remain allocated until the application has finished.
-This may improve in the future.
-
+On Nomad, setting `spark.shuffle.service.enabled` to `true` configures Spark executors to point to an externally deployed 
+Spark shuffle service, which must be deployed separately from the running Spark job (similarly to the deployment pattern 
+for Spark Standalone or Spark on Mesos).  Executors write their shuffle data to a local directory (`/spark-local-dir` by default, 
+reconfigurable via `spark.local.dir`).  The external shuffle service must be able to read from this directory in order to 
+access and serve shuffle data.  This requires no extra configuration in the shuffle service deployment because 
+executors inform the shuffle service of their local shuffle locations when registering with them. When running
+Spark on Nomad using Docker, this directory must be volume mapped to the Nomad host at a location the shuffle service 
+is able to access.
 
 # Python and R
 
