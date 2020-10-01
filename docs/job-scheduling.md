@@ -81,7 +81,7 @@ useful if multiple applications share resources in your Spark cluster.
 This feature is disabled by default and available on all coarse-grained cluster managers, i.e.
 [standalone mode](spark-standalone.html), [YARN mode](running-on-yarn.html),
 [Mesos coarse-grained mode](running-on-mesos.html#mesos-run-modes), and
-[Nomad mode](running-on-nomade.html#dynamic-allocation-of-executors).
+[Nomad mode](running-on-nomad.html#dynamic-allocation-of-executors).
 
 ### Configuration and Setup
 
