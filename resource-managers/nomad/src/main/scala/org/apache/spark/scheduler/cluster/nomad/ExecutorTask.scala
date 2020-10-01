@@ -18,10 +18,9 @@
 package org.apache.spark.scheduler.cluster.nomad
 
 import com.hashicorp.nomad.apimodel.Task
-
-import org.apache.spark.{SecurityManager, SparkConf}
 import org.apache.spark.internal.config.EXECUTOR_MEMORY
 import org.apache.spark.util.Utils
+import org.apache.spark.{SecurityManager, SparkConf}
 
 private[spark] object ExecutorTask
   extends SparkNomadTaskType("executor", "executor", EXECUTOR_MEMORY) {
@@ -72,10 +71,9 @@ private[spark] object ExecutorTask
       .map(Utils.splitCommandString).getOrElse(Seq.empty)
 
     task.addEnv("SPARK_EXECUTOR_OPTS", (extraJavaOpts ++ executorConf).mkString(" "))
-
     task.addEnv("SPARK_EXECUTOR_MEMORY", jvmMemory(conf, task))
 
-    val sparkLocalDirs = conf.getOption("spark.local.dir").getOrElse("/spark-local-dir")
+    val sparkLocalDirs = conf.getOption("spark.local.dir").getOrElse("/tmp")
     task.addEnv("SPARK_LOCAL_DIRS", sparkLocalDirs)
 
     // Have the executor give its allocation ID as its log URL
