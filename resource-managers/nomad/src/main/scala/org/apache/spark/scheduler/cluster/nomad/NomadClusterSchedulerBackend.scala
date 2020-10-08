@@ -181,14 +181,7 @@ private[spark] class NomadClusterSchedulerBackend(
     driverEndpoint.ask[Boolean](RequestExecutors(requestedTotal, 0, Map.empty, Set.empty))
 
   override def doKillExecutors(executorIds: Seq[String]): Future[Boolean] = {
-    logWarning(
-      executorIds.mkString(
-        s"Ignoring request to kill ${executorIds.size} executor(s): ",
-        ",",
-        " (not yet implemented for Nomad)"
-      )
-    )
-    super.doKillExecutors(executorIds)
+    jobController.removeExecutors(executorIds)
   }
 
 }

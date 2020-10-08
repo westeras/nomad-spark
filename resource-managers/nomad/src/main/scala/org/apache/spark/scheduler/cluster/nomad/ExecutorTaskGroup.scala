@@ -20,11 +20,10 @@ package org.apache.spark.scheduler.cluster.nomad
 import com.hashicorp.nomad.apimodel.TaskGroup
 
 import org.apache.spark.SparkConf
-import org.apache.spark.internal.config.SHUFFLE_SERVICE_ENABLED
-import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.CommonConf
+import org.apache.spark.internal.config.{SHUFFLE_SERVICE_ENABLED, SHUFFLE_SERVICE_PORT}
 
 private[spark] object ExecutorTaskGroup
-  extends SparkNomadTaskGroupType("executor", ExecutorTask, ShuffleServiceTask) {
+  extends SparkNomadTaskGroupType("executor", ExecutorTask) {
 
   def configure(
       jobConf: SparkNomadJob.CommonConf,
@@ -38,10 +37,8 @@ private[spark] object ExecutorTaskGroup
 
     val shuffleServicePortPlaceholder =
       if (conf.get(SHUFFLE_SERVICE_ENABLED)) {
-        val task = findOrAdd(group, ShuffleServiceTask)
-        Some(ShuffleServiceTask.configure(jobConf, conf, task, reconfiguring))
+        Some(conf.get(SHUFFLE_SERVICE_PORT).toString)
       } else {
-        find(group, ShuffleServiceTask).foreach(group.getTasks.remove)
         None
       }
 

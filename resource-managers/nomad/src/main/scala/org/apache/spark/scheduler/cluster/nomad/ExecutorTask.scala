@@ -72,10 +72,10 @@ private[spark] object ExecutorTask
       .map(Utils.splitCommandString).getOrElse(Seq.empty)
 
     task.addEnv("SPARK_EXECUTOR_OPTS", (extraJavaOpts ++ executorConf).mkString(" "))
-
     task.addEnv("SPARK_EXECUTOR_MEMORY", jvmMemory(conf, task))
 
-    task.addEnv("SPARK_LOCAL_DIRS", "${NOMAD_ALLOC_DIR}")
+    val sparkLocalDirs = conf.getOption("spark.local.dir").getOrElse("/tmp")
+    task.addEnv("SPARK_LOCAL_DIRS", sparkLocalDirs)
 
     // Have the executor give its allocation ID as its log URL
     // The driver will lookup the actual log URLs
