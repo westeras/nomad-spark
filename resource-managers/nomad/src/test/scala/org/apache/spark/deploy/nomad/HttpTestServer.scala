@@ -23,8 +23,8 @@ import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 
 import org.apache.commons.codec.digest.DigestUtils
 import org.apache.commons.io.{FileUtils, IOUtils}
-import org.spark_project.jetty.server.{AbstractNetworkConnector, Request, Server}
-import org.spark_project.jetty.server.handler.AbstractHandler
+import org.eclipse.jetty.server.{AbstractNetworkConnector, Request, Server}
+import org.eclipse.jetty.server.handler.AbstractHandler
 
 import org.apache.spark.util.Utils
 

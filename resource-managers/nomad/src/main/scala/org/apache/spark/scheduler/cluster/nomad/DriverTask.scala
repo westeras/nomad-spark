@@ -141,7 +141,7 @@ private[spark] object DriverTask extends SparkNomadTaskType("driver", "driver", 
       task.addServices(
         new Service()
           .setName(jobConf.appId
-            .toLowerCase
+            .toLowerCase(java.util.Locale.ROOT)
             .replaceAll("[^a-z0-9]+", "-")
             .replaceAll("^-?([a-z0-9-]{62}[a-z0-9]?).*", "$1")
           )

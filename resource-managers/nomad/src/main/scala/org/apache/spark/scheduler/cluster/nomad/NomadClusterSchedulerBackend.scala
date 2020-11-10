@@ -122,7 +122,7 @@ private[spark] class NomadClusterSchedulerBackend(
    * Extend DriverEndpoint with Nomad-specific functionality.
    */
   protected class NomadDriverEndpoint(rpcEnv: RpcEnv, sparkProperties: Seq[(String, String)])
-    extends DriverEndpoint(rpcEnv, sparkProperties) {
+    extends DriverEndpoint {
 
     override def onStart(): Unit = {
 
@@ -151,7 +151,7 @@ private[spark] class NomadClusterSchedulerBackend(
        * Intercept registration messages from executors, resolve their log URLs,
        * then relay a copy of the registration message with resolved log URLs to the parent class.
        */
-      case message@RegisterExecutor(executorId, _, _, _, logUrls) =>
+      case message@RegisterExecutor(executorId, _, _, _, logUrls, _, _, _) =>
         super.receiveAndReply(context)(
           try message.copy(logUrls = jobController.resolveExecutorLogUrls(logUrls))
           catch { case e: Exception =>
@@ -167,7 +167,7 @@ private[spark] class NomadClusterSchedulerBackend(
   /**
    * Create a NomadDriverEndpoint.
    */
-  override protected def createDriverEndpoint(properties: Seq[(String, String)]): DriverEndpoint = {
+  protected def createDriverEndpoint(properties: Seq[(String, String)]): DriverEndpoint = {
     new NomadDriverEndpoint(rpcEnv, properties)
   }
 
