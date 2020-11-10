@@ -1394,15 +1394,6 @@ object CodeGenerator extends Logging {
     }
   }
 
-  private def logGeneratedCode(code: CodeAndComment): Unit = {
-    val maxLines = SQLConf.get.loggingMaxLinesForCodegen
-    if (Utils.isTesting) {
-      logError(s"\n${CodeFormatter.format(code, maxLines)}")
-    } else {
-      logInfo(s"\n${CodeFormatter.format(code, maxLines)}")
-    }
-  }
-
   /**
    * Returns the bytecode statistics (max method bytecode size, max constant pool size, and
    * # of inner classes) of generated classes by inspecting Janino classes.

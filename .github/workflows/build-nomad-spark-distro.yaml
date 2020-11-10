@@ -14,12 +14,12 @@ jobs:
         with:
           java-version: '1.8'
       - name: Build Spark Distribution
-        run: ./dev/make-distribution.sh --name hadoop-2.7-nomad-0.9.7-expediagroup-$(date +'%Y%m%d') --pip --tgz -Phadoop-2.7 -Dhadoop.version=2.7.3 -Phive -Phive-thriftserver -Pnomad
+        run: ./dev/make-distribution.sh --name hadoop-3.2-nomad-0.9.7-expediagroup-$(date +'%Y%m%d') --pip --tgz -Phadoop-3.2 -Phive -Phive-thriftserver -Pnomad
       - name: Test Distribution
         run: |
           export VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
-          tar -xvf /home/runner/work/nomad-spark/nomad-spark/spark-$VERSION-bin-hadoop-2.7-nomad-0.9.7-expediagroup-$(date +'%Y%m%d').tgz
-          export SPARK_HOME=/home/runner/work/nomad-spark/nomad-spark/spark-$VERSION-bin-hadoop-2.7-nomad-0.9.7-expediagroup-$(date +'%Y%m%d')
+          tar -xvf /home/runner/work/nomad-spark/nomad-spark/spark-$VERSION-bin-hadoop-3.2-nomad-0.9.7-expediagroup-$(date +'%Y%m%d').tgz
+          export SPARK_HOME=/home/runner/work/nomad-spark/nomad-spark/spark-$VERSION-bin-hadoop-3.2-nomad-0.9.7-expediagroup-$(date +'%Y%m%d')
           $SPARK_HOME/bin/spark-submit --class org.apache.spark.examples.JavaSparkPi --master local --conf spark.executor.instances=1 --conf spark.nomad.sparkDistribution=local:///spark $SPARK_HOME/examples/jars/spark-examples*.jar
       - name: Cut Tag from Branch
         run: |
