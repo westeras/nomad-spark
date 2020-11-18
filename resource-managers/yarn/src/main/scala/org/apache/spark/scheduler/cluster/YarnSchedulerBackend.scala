@@ -60,7 +60,7 @@ private[spark] abstract class YarnSchedulerBackend(
   protected var totalExpectedExecutors = 0
 
   // The num of current max ExecutorId used to re-register appMaster
-  @volatile protected var currentExecutorIdCounter = 0
+  currentExecutorIdCounter = 0
 
   private val yarnSchedulerEndpoint = new YarnSchedulerEndpoint(rpcEnv)
   protected var amEndpoint: Option[RpcEndpointRef] = None
