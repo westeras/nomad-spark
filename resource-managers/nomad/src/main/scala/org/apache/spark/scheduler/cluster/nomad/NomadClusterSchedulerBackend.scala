@@ -17,17 +17,17 @@
 
 package org.apache.spark.scheduler.cluster.nomad
 
-import scala.concurrent.Future
-
-import org.apache.spark.{ SparkConf, SparkContext }
 import org.apache.spark.internal.config._
-import org.apache.spark.launcher.{ LauncherBackend, SparkAppHandle }
-import org.apache.spark.rpc.{ RpcCallContext, RpcEndpointAddress, RpcEnv }
+import org.apache.spark.launcher.{LauncherBackend, SparkAppHandle}
+import org.apache.spark.rpc.{RpcCallContext, RpcEndpointAddress}
 import org.apache.spark.scheduler.TaskSchedulerImpl
+import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages.{RegisterExecutor, RequestExecutors}
 import org.apache.spark.scheduler.cluster._
-import org.apache.spark.scheduler.cluster.CoarseGrainedClusterMessages.{ RegisterExecutor, RequestExecutors }
 import org.apache.spark.scheduler.cluster.nomad.SparkNomadJob.CommonConf
-import org.apache.spark.util.{ ShutdownHookManager, Utils }
+import org.apache.spark.util.{ShutdownHookManager, Utils}
+import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.concurrent.Future
 
 /**
  * A scheduler backend that runs Spark executors on a Nomad cluster.
@@ -121,8 +121,7 @@ private[spark] class NomadClusterSchedulerBackend(
   /**
    * Extend DriverEndpoint with Nomad-specific functionality.
    */
-  protected class NomadDriverEndpoint(rpcEnv: RpcEnv, sparkProperties: Seq[(String, String)])
-    extends DriverEndpoint {
+  protected class NomadDriverEndpoint() extends DriverEndpoint {
 
     override def onStart(): Unit = {
 
@@ -167,8 +166,8 @@ private[spark] class NomadClusterSchedulerBackend(
   /**
    * Create a NomadDriverEndpoint.
    */
-  protected def createDriverEndpoint(properties: Seq[(String, String)]): DriverEndpoint = {
-    new NomadDriverEndpoint(rpcEnv, properties)
+  override protected def createDriverEndpoint(): DriverEndpoint = {
+    new NomadDriverEndpoint
   }
 
   /**
